@@ -1,60 +1,25 @@
 package `in`.procyk.chrd.screen
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.*
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.scrollBy
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SmallFloatingActionButton
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import `in`.procyk.chrd.model.LinePart
-import `in`.procyk.chrd.model.LinePart.ChordInText
-import `in`.procyk.chrd.model.LinePart.ChordOverWhitespace
-import `in`.procyk.chrd.model.LinePart.ChordedLyric
-import `in`.procyk.chrd.model.LinePart.Lyric
-import `in`.procyk.chrd.model.SectionType
-import `in`.procyk.chrd.model.Song
-import `in`.procyk.chrd.model.SongLine
-import `in`.procyk.chrd.model.SongSection
+import `in`.procyk.chrd.model.*
+import `in`.procyk.chrd.model.LinePart.*
 import `in`.procyk.chrd.viewmodel.SongViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -105,16 +70,16 @@ private fun AutoScrollableSongView(
         floatingActionButton = {
             Column(
                 horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 AnimatedVisibility(
                     visible = isAutoScrolling,
                     enter = fadeIn() + slideInVertically(initialOffsetY = { fullHeight -> fullHeight / 2 }),
-                    exit = fadeOut() + slideOutVertically(targetOffsetY = { fullHeight -> fullHeight / 2 })
+                    exit = fadeOut() + slideOutVertically(targetOffsetY = { fullHeight -> fullHeight / 2 }),
                 ) {
                     Column(
                         horizontalAlignment = Alignment.End,
-                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
                         SmallFloatingActionButton(
                             onClick = {
@@ -122,11 +87,11 @@ private fun AutoScrollableSongView(
                                 val updated = prev / 2
                                 scrollSpeedMillis = if (updated > 0) updated else prev
                             },
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Add,
-                                contentDescription = "Scroll Faster"
+                                contentDescription = "Scroll Faster",
                             )
                         }
 
@@ -134,11 +99,11 @@ private fun AutoScrollableSongView(
                             onClick = {
                                 scrollSpeedMillis *= 2
                             },
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Remove,
-                                contentDescription = "Scroll Slower"
+                                contentDescription = "Scroll Slower",
                             )
                         }
                     }
@@ -154,42 +119,45 @@ private fun AutoScrollableSongView(
                                     isResetAvailable = false
                                 }
                             },
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Refresh,
-                                contentDescription = "Restart Auto-scroll"
+                                contentDescription = "Restart Auto-scroll",
                             )
                         }
                     }
 
                     else -> FloatingActionButton(
                         onClick = { isAutoScrolling = !isAutoScrolling },
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
                     ) {
                         Icon(
                             imageVector = if (isAutoScrolling) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            contentDescription = if (isAutoScrolling) "Pause Auto-scroll" else "Start Auto-scroll"
+                            contentDescription = if (isAutoScrolling) "Pause Auto-scroll" else "Start Auto-scroll",
                         )
                     }
                 }
             }
-        }) { paddingValues ->
+        },
+    ) { paddingValues ->
         Column(
             modifier = modifier.fillMaxSize().padding(paddingValues).verticalScroll(scrollState)
-                .padding(16.dp)
+                .padding(16.dp),
         ) {
             Text(
                 text = song.title,
                 style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
             Text(
                 text = "by ${song.author}",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 24.dp)
+                modifier = Modifier.padding(bottom = 24.dp),
             )
+
+            SongChordsView(song)
 
             song.sections.forEach { section ->
                 SongSectionView(section)
@@ -215,13 +183,13 @@ private fun SongSectionView(section: SongSection) {
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier.padding(bottom = 8.dp)
+                modifier = Modifier.padding(bottom = 8.dp),
             )
         }
 
         val isChorus = section.type == SectionType.CHORUS
         Column(
-            modifier = Modifier.padding(start = if (isChorus) 16.dp else 0.dp) // Indent chorus
+            modifier = Modifier.padding(start = if (isChorus) 16.dp else 0.dp), // Indent chorus
         ) {
             section.lines.forEach { line ->
                 SongLineView(line, isChorus)
@@ -234,7 +202,7 @@ private fun SongSectionView(section: SongSection) {
 @Composable
 private fun SongLineView(line: SongLine, isChorus: Boolean) {
     FlowRow(
-        modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start
+        modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start,
     ) {
         line.parts.forEach { part ->
             LinePartView(part = part, isChorus = isChorus)
@@ -252,7 +220,7 @@ private fun LinePartView(part: LinePart, isChorus: Boolean) {
     val spacerText = " "
 
     Column(
-        modifier = Modifier.padding(end = 2.dp) // Slight spacing between words
+        modifier = Modifier.padding(end = 2.dp), // Slight spacing between words
     ) {
         val chordText = when (part) {
             is ChordOverWhitespace -> part.chord.value
@@ -262,7 +230,7 @@ private fun LinePartView(part: LinePart, isChorus: Boolean) {
         }
 
         Text(
-            text = chordText, color = chordColor, fontWeight = FontWeight.Bold, fontSize = 16.sp
+            text = chordText, color = chordColor, fontWeight = FontWeight.Bold, fontSize = 16.sp,
         )
 
         Text(
@@ -282,5 +250,124 @@ private fun LinePartView(part: LinePart, isChorus: Boolean) {
             },
             fontSize = 16.sp,
         )
+    }
+}
+
+@Composable
+private fun SongChordsView(song: Song) {
+    val chords = remember(song) {
+        song.sections.asSequence()
+            .flatMap { it.lines }
+            .flatMap { it.parts }
+            .mapNotNull {
+                when (it) {
+                    is ChordedLyric -> it.chord
+                    is ChordOverWhitespace -> it.chord
+                    is ChordInText -> it.chord
+                    is Lyric -> null
+                }
+            }
+            .distinct()
+            .sortedBy { it.name }.toList()
+    }
+
+    if (chords.isNotEmpty()) {
+        FlowRow(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+            horizontalArrangement = Arrangement.spacedBy(24.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+        ) {
+            chords.forEach { chord ->
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = chord.value,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    ChordDiagram(chord)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChordDiagram(
+    chord: Chord,
+    stringInterval: Dp = 16.dp,
+    fretInterval: Dp = 20.dp,
+    topPadding: Dp = 16.dp,
+) {
+    val onSurface = MaterialTheme.colorScheme.onSurface
+    val representation = chord.representation
+
+    val maxFret = representation.mapNotNull { it.digitToIntOrNull() }.maxOrNull() ?: 0
+    val displayFrets = maxOf(5, maxFret)
+
+    val width = stringInterval * 5
+    val height = fretInterval * displayFrets + topPadding
+
+    Canvas(modifier = Modifier.size(width, height)) {
+        val sSpace = size.width / 5
+        val fSpace = (size.height - topPadding.toPx()) / displayFrets
+        val nutY = topPadding.toPx()
+
+        for (i in 0 until 6) {
+            val x = i * sSpace
+            drawLine(
+                color = onSurface,
+                start = Offset(x, nutY),
+                end = Offset(x, size.height),
+                strokeWidth = 1.dp.toPx(),
+            )
+        }
+
+        for (i in 0..displayFrets) {
+            val y = nutY + i * fSpace
+            drawLine(
+                color = onSurface,
+                start = Offset(0f, y),
+                end = Offset(size.width, y),
+                strokeWidth = if (i == 0) 3.dp.toPx() else 1.dp.toPx(),
+            )
+        }
+
+        representation.forEachIndexed { sIndex, char ->
+            val x = sIndex * sSpace
+            when (char) {
+                'x' -> {
+                    val crossSize = 2.dp.toPx()
+                    val centerY = nutY / 2
+                    drawLine(
+                        color = onSurface,
+                        start = Offset(x - crossSize, centerY - crossSize),
+                        end = Offset(x + crossSize, centerY + crossSize),
+                        strokeWidth = 1.dp.toPx(),
+                    )
+                    drawLine(
+                        color = onSurface,
+                        start = Offset(x + crossSize, centerY - crossSize),
+                        end = Offset(x - crossSize, centerY + crossSize),
+                        strokeWidth = 1.dp.toPx(),
+                    )
+                }
+
+                '0' -> {}
+
+                else -> {
+                    val fret = char.digitToIntOrNull()
+                    if (fret != null && fret > 0) {
+                        val y = nutY + (fret - 0.5f) * fSpace
+                        drawCircle(
+                            color = onSurface,
+                            radius = 4.dp.toPx(),
+                            center = Offset(x, y),
+                        )
+                    }
+                }
+            }
+        }
     }
 }
