@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -116,10 +117,12 @@ fun SearchScreen(
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 OutlinedTextField(
-                    modifier = Modifier.weight(1f, fill = true),
+                    modifier = Modifier
+                        .weight(1f, fill = true)
+                        .defaultMinSize(minHeight = 60.dp),
                     value = query,
                     onValueChange = viewModel::onQueryChanged,
                     singleLine = true,
@@ -132,8 +135,8 @@ fun SearchScreen(
                 )
                 FilledIconButton(
                     onClick = viewModel::onRequestSearch,
-                    shape = RoundedCornerShape(4.dp),
-                    modifier = Modifier.size(48.dp),
+                    shape = RoundedCornerShape(4.dp, 24.dp ,24.dp, 4.dp),
+                    modifier = Modifier.size(60.dp),
                 ) {
                     Image(Icons.Default.Search, contentDescription = null)
                 }
