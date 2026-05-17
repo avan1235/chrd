@@ -2,19 +2,41 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="apple-touch-icon" sizes="1024x1024" href="apple-touch-icon-1024x1024.png">
+    <link rel="icon" href="favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="color-scheme" content="light dark">
     <title>Chrd</title>
     <link type="text/css" rel="stylesheet" href="styles.css">
+    <meta name="theme-color" content="#FFFFFF">
+    <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: dark)">
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registered with scope:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('ServiceWorker registration failed:', error);
+                    });
+            });
+        }
+    </script>
 </head>
 <body style="text-align: center; align-content: center">
-    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 50 50" role="presentation">
-        <circle cx="25" cy="25" r="20" stroke="#ccc" stroke-width="4" fill="none"/>
-        <circle cx="25" cy="25" r="20" stroke="#333" stroke-width="4" fill="none" stroke-linecap="round"
-                stroke-dasharray="90 125">
-            <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="1s"
-                              repeatCount="indefinite"/>
-        </circle>
-    </svg>
-    <script type="application/javascript" src="webApp.js"></script>
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 50 50" role="presentation">
+    <circle cx="25" cy="25" r="20" stroke="#ccc" stroke-width="4" fill="none"/>
+    <circle cx="25" cy="25" r="20" stroke="#333" stroke-width="4" fill="none" stroke-linecap="round"
+            stroke-dasharray="90 125">
+        <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="1s"
+                          repeatCount="indefinite"/>
+    </circle>
+</svg>
+<script type="application/javascript" src="webApp.js"></script>
 </body>
 </html>
