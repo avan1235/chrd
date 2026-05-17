@@ -32,7 +32,7 @@ internal fun SongScreen(
     val song by viewModel.song.collectAsState()
     Box(
         modifier = Modifier
-            .background(MaterialTheme.colorScheme.primaryContainer)
+            .background(MaterialTheme.colorScheme.background)
             .safeContentPadding()
             .fillMaxSize(),
         contentAlignment = Alignment.Center,
