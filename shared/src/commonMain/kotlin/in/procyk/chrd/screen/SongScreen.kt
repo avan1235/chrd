@@ -1,12 +1,10 @@
 package `in`.procyk.chrd.screen
 
 import androidx.compose.animation.*
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
+import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -24,6 +22,7 @@ import `in`.procyk.chrd.viewmodel.SongViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.seconds
 
 
 @Composable
@@ -45,6 +44,8 @@ internal fun SongScreen(
     }
 }
 
+private val SCROLL_REFRESH_RATE = 1.seconds / 120
+
 @Composable
 private fun AutoScrollableSongView(
     song: Song,
@@ -52,18 +53,24 @@ private fun AutoScrollableSongView(
 ) {
     val scrollState = rememberScrollState()
     var isAutoScrolling by remember { mutableStateOf(false) }
-    var scrollSpeedMillis by remember { mutableLongStateOf(36L) }
+    var scrollBy by remember { mutableFloatStateOf(1f) }
     var isResetAvailable by remember { mutableStateOf(false) }
+    var clickedChord by remember { mutableStateOf<Chord?>(null) }
 
-    LaunchedEffect(isAutoScrolling) {
+    LaunchedEffect(isAutoScrolling, scrollBy) {
         if (!isAutoScrolling) return@LaunchedEffect
 
-        while (isActive && scrollState.value < scrollState.maxValue) {
-            scrollState.scrollBy(1f)
-            delay(scrollSpeedMillis)
+        try {
+            while (isActive && scrollState.value < scrollState.maxValue) {
+                scrollState.scrollBy(scrollBy)
+                delay(SCROLL_REFRESH_RATE)
+            }
+        } finally {
+            if (scrollState.value >= scrollState.maxValue) {
+                isResetAvailable = true
+                isAutoScrolling = false
+            }
         }
-        isResetAvailable = true
-        isAutoScrolling = false
     }
 
     Scaffold(
@@ -83,9 +90,7 @@ private fun AutoScrollableSongView(
                     ) {
                         SmallFloatingActionButton(
                             onClick = {
-                                val prev = scrollSpeedMillis
-                                val updated = prev / 2
-                                scrollSpeedMillis = if (updated > 0) updated else prev
+                                scrollBy *= 2
                             },
                             containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         ) {
@@ -97,7 +102,10 @@ private fun AutoScrollableSongView(
 
                         SmallFloatingActionButton(
                             onClick = {
-                                scrollSpeedMillis *= 2
+                                val prev = scrollBy
+                                val updated = prev / 2
+                                scrollBy = if (updated > 0.1f) updated else prev
+
                             },
                             containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         ) {
@@ -160,15 +168,42 @@ private fun AutoScrollableSongView(
             SongChordsView(song)
 
             song.sections.forEach { section ->
-                SongSectionView(section)
+                SongSectionView(section, onChordClick = { clickedChord = it })
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }
+
+    if (clickedChord != null) {
+        AlertDialog(
+            onDismissRequest = { clickedChord = null },
+            confirmButton = {
+                TextButton(onClick = { clickedChord = null }) {
+                    Text("Close")
+                }
+            },
+            title = {
+                Text(
+                    text = clickedChord!!.value,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            },
+            text = {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    ChordDiagram(clickedChord!!)
+                }
+            },
+        )
+    }
 }
 
 @Composable
-private fun SongSectionView(section: SongSection) {
+private fun SongSectionView(section: SongSection, onChordClick: (Chord) -> Unit) {
     Column {
         val sectionName = when (section.type) {
             SectionType.VERSE -> "Verse"
@@ -189,10 +224,10 @@ private fun SongSectionView(section: SongSection) {
 
         val isChorus = section.type == SectionType.CHORUS
         Column(
-            modifier = Modifier.padding(start = if (isChorus) 16.dp else 0.dp), // Indent chorus
+            modifier = Modifier.padding(start = if (isChorus) 16.dp else 0.dp),
         ) {
             section.lines.forEach { line ->
-                SongLineView(line, isChorus)
+                SongLineView(line, isChorus, onChordClick = onChordClick)
                 Spacer(modifier = Modifier.height(12.dp))
             }
         }
@@ -200,18 +235,18 @@ private fun SongSectionView(section: SongSection) {
 }
 
 @Composable
-private fun SongLineView(line: SongLine, isChorus: Boolean) {
+private fun SongLineView(line: SongLine, isChorus: Boolean, onChordClick: (Chord) -> Unit) {
     FlowRow(
         modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start,
     ) {
         line.parts.forEach { part ->
-            LinePartView(part = part, isChorus = isChorus)
+            LinePartView(part = part, isChorus = isChorus, onChordClick = onChordClick)
         }
     }
 }
 
 @Composable
-private fun LinePartView(part: LinePart, isChorus: Boolean) {
+private fun LinePartView(part: LinePart, isChorus: Boolean, onChordClick: (Chord) -> Unit) {
     val chordColor = MaterialTheme.colorScheme.primary
     val lyricColor =
         if (isChorus) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
@@ -222,33 +257,45 @@ private fun LinePartView(part: LinePart, isChorus: Boolean) {
     Column(
         modifier = Modifier.padding(end = 2.dp), // Slight spacing between words
     ) {
-        val chordText = when (part) {
-            is ChordOverWhitespace -> part.chord.value
-            is ChordedLyric -> part.chord.value
-            is Lyric -> spacerText
-            is ChordInText -> spacerText
+        val chordTop = when (part) {
+            is ChordOverWhitespace -> part.chord
+            is ChordedLyric -> part.chord
+            else -> null
+        }
+        val chordTextTop = chordTop?.value ?: spacerText
+
+
+        Text(
+            text = chordTextTop,
+            color = chordColor,
+            fontWeight = FontWeight.Bold,
+            fontSize = 16.sp,
+            modifier = if (chordTop != null) {
+                val interactionSource = remember { MutableInteractionSource() }
+                Modifier.clickable(interactionSource, indication = null) { onChordClick(chordTop) }
+            } else Modifier,
+        )
+
+        val chordBottom = when (part) {
+            is ChordInText -> part.chord
+            else -> null
+        }
+        val textBottom = when (part) {
+            is Lyric -> part.text
+            is ChordedLyric -> part.text
+            is ChordOverWhitespace -> spacerText
+            is ChordInText -> part.chord.value
         }
 
         Text(
-            text = chordText, color = chordColor, fontWeight = FontWeight.Bold, fontSize = 16.sp,
-        )
-
-        Text(
-            text = when (part) {
-                is Lyric -> part.text
-                is ChordedLyric -> part.text
-                is ChordOverWhitespace -> spacerText
-                is ChordInText -> part.chord.value
-            },
-            color = when (part) {
-                is Lyric, is ChordedLyric, is ChordOverWhitespace -> lyricColor
-                is ChordInText -> chordColor
-            },
-            fontWeight = when (part) {
-                is Lyric, is ChordedLyric, is ChordOverWhitespace -> lyricFontWeight
-                is ChordInText -> FontWeight.Bold
-            },
+            text = textBottom,
+            color = if (chordBottom != null) chordColor else lyricColor,
+            fontWeight = if (chordBottom != null) FontWeight.Bold else lyricFontWeight,
             fontSize = 16.sp,
+            modifier = if (chordBottom != null) {
+                val interactionSource = remember { MutableInteractionSource() }
+                Modifier.clickable(interactionSource, indication = null) { onChordClick(chordBottom) }
+            } else Modifier,
         )
     }
 }
