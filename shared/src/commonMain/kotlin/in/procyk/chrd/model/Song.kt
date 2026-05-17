@@ -42,7 +42,7 @@ sealed interface LinePart {
 
     data class ChordedLyric(
         val text: String,
-        val chord: String,
+        val chord: Chord,
     ) : LinePart
 
     data class ChordOverWhitespace(

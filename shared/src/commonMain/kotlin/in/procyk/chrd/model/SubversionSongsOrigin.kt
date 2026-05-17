@@ -172,7 +172,7 @@ class SubversionSongsOrigin(
                         if (match != null) {
                             val firstPart = match.value
                             val rest = text.substring(match.range.last + 1)
-                            parts.add(LinePart.ChordedLyric(firstPart, pendingChord!!))
+                            parts.add(LinePart.ChordedLyric(firstPart, Chord(pendingChord!!)))
                             pendingChord = null
                             addLyric(rest)
                         } else {

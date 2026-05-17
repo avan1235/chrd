@@ -256,7 +256,7 @@ private fun LinePartView(part: LinePart, isChorus: Boolean) {
     ) {
         val chordText = when (part) {
             is ChordOverWhitespace -> part.chord.value
-            is ChordedLyric -> part.chord
+            is ChordedLyric -> part.chord.value
             is Lyric -> spacerText
             is ChordInText -> spacerText
         }

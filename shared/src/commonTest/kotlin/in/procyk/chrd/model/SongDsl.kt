@@ -49,7 +49,7 @@ class LineBuilder {
     }
 
     infix fun String.c(chord: String) {
-        parts.add(LinePart.ChordedLyric(this, chord))
+        parts.add(LinePart.ChordedLyric(this, Chord(chord)))
     }
 
     fun lyric(text: String) {
