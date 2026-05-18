@@ -93,6 +93,7 @@ fun SearchScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 OutlinedTextField(
+                    shape = RoundedCornerShape(24.dp, 4.dp, 4.dp, 24.dp),
                     modifier = Modifier
                         .weight(1f, fill = true)
                         .defaultMinSize(minHeight = 60.dp),
