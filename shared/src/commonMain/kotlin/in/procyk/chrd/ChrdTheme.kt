@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
+import `in`.procyk.chrd.db.ThemeMode
 import chrd.shared.generated.resources.JetBrainsMono_Bold
 import chrd.shared.generated.resources.JetBrainsMono_BoldItalic
 import chrd.shared.generated.resources.JetBrainsMono_ExtraBold
@@ -181,9 +182,14 @@ private val baseline = Typography()
 
 @Composable
 internal fun ChrdTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    themeMode: ThemeMode = ThemeMode.SYSTEM,
     content: @Composable() () -> Unit
 ) {
+    val darkTheme = when (themeMode) {
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+    }
     val colorScheme = when {
         darkTheme -> darkScheme
         else -> lightScheme

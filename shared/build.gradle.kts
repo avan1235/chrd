@@ -9,6 +9,8 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.buildKonfig)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.room)
 }
 
 kotlin {
@@ -52,6 +54,7 @@ kotlin {
     sourceSets {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
+            implementation(libs.sqlite.bundled)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -68,13 +71,29 @@ kotlin {
             implementation("com.fleeksoft.ksoup:ksoup-network:0.2.6")
 
             implementation("org.jetbrains.compose.material:material-icons-extended:1.7.3")
+
+            api(libs.room.runtime)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
         }
+        jvmMain.dependencies {
+            implementation(libs.sqlite.bundled)
+        }
+        iosMain.dependencies {
+            implementation(libs.sqlite.bundled)
+        }
         jsMain.dependencies {
             implementation(libs.wrappers.browser)
+            implementation(libs.sqlite.web)
+            implementation(npm("@sqlite.org/sqlite-wasm", "3.50.1-build1"))
+            implementation(npm("sqlite-wasm-worker", project.file("sqlite-wasm-worker")))
+        }
+        wasmJsMain.dependencies {
+            implementation(libs.sqlite.web)
+            implementation(npm("@sqlite.org/sqlite-wasm", "3.50.1-build1"))
+            implementation(npm("sqlite-wasm-worker", project.file("sqlite-wasm-worker")))
         }
     }
 
@@ -85,6 +104,20 @@ kotlin {
 
 dependencies {
     androidRuntimeClasspath(libs.compose.uiTooling)
+    add("kspAndroid", libs.room.compiler)
+    add("kspJvm", libs.room.compiler)
+    add("kspIosArm64", libs.room.compiler)
+    add("kspIosSimulatorArm64", libs.room.compiler)
+    add("kspJs", libs.room.compiler)
+    add("kspWasmJs", libs.room.compiler)
+}
+
+extensions.configure<androidx.room3.gradle.RoomExtension> {
+    schemaDirectory("$projectDir/schemas")
+}
+
+ksp {
+    arg("room.generateKotlin", "true")
 }
 
 compose.resources {

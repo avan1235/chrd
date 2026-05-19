@@ -315,7 +315,7 @@ private fun SongChordsView(song: Song) {
                 }
             }
             .distinct()
-            .sortedBy { it.name }.toList()
+            .sortedWith(compareBy({ it.root }, { it.quality })).toList()
     }
 
     if (chords.isNotEmpty()) {
