@@ -11,16 +11,16 @@ enum class Note(val semitones: Int) {
     companion object {
         fun fromString(s: String): Note = when (s.uppercase()) {
             "C" -> C
-            "C#", "DB" -> C_SHARP
+            "C#", "DB", "CIS", "DES" -> C_SHARP
             "D" -> D
-            "D#", "EB" -> D_SHARP
+            "D#", "EB", "DIS", "ES" -> D_SHARP
             "E" -> E
             "F" -> F
-            "F#", "GB" -> F_SHARP
+            "F#", "GB", "FIS", "GES" -> F_SHARP
             "G" -> G
-            "G#", "AB" -> G_SHARP
+            "G#", "AB", "GIS", "AS" -> G_SHARP
             "A" -> A
-            "A#", "BB" -> A_SHARP
+            "A#", "BB", "AIS", "BES" -> A_SHARP
             "B", "H" -> B
             else -> throw IllegalArgumentException("Unknown note: $s")
         }
@@ -51,11 +51,10 @@ enum class ChordQuality(val suffix: String) {
     SUS_4("sus4")
 }
 
-// 1. CHORD IS NOW A DATA CLASS
 data class Chord(
     val root: Note,
     val quality: ChordQuality,
-    val representation: String
+    val representation: String,
 ) {
     val value: String get() = toString()
 
@@ -67,9 +66,7 @@ data class Chord(
     override fun toString(): String = "${root}${quality.suffix}"
 
     companion object {
-        private val chordRegex = "^([A-Ha-h][#b]?)(.*)$".toRegex()
-
-        // 2. THE CHORD DICTIONARY (Easy to maintain and read)
+        // --- The Chord Dictionary ---
         private val voicingDictionary: Map<Pair<Note, ChordQuality>, String> = mapOf(
             // --- Major Chords ---
             Pair(Note.C, ChordQuality.MAJOR) to "x32010",
@@ -153,33 +150,8 @@ data class Chord(
             Pair(Note.G_SHARP, ChordQuality.SUS_4) to "466644",
             Pair(Note.A, ChordQuality.SUS_4) to "x02230",
             Pair(Note.A_SHARP, ChordQuality.SUS_4) to "x13341",
-            Pair(Note.B, ChordQuality.SUS_4) to "x24452"
+            Pair(Note.B, ChordQuality.SUS_4) to "x24452",
         )
-
-        val C = fromRootAndQuality(Note.C, ChordQuality.MAJOR)
-        val Cm = fromRootAndQuality(Note.C, ChordQuality.MINOR)
-        val C_SHARP = fromRootAndQuality(Note.C_SHARP, ChordQuality.MAJOR)
-        val C_SHARP_m = fromRootAndQuality(Note.C_SHARP, ChordQuality.MINOR)
-        val D = fromRootAndQuality(Note.D, ChordQuality.MAJOR)
-        val Dm = fromRootAndQuality(Note.D, ChordQuality.MINOR)
-        val D_SHARP = fromRootAndQuality(Note.D_SHARP, ChordQuality.MAJOR)
-        val D_SHARP_m = fromRootAndQuality(Note.D_SHARP, ChordQuality.MINOR)
-        val E = fromRootAndQuality(Note.E, ChordQuality.MAJOR)
-        val Em = fromRootAndQuality(Note.E, ChordQuality.MINOR)
-        val F = fromRootAndQuality(Note.F, ChordQuality.MAJOR)
-        val Fm = fromRootAndQuality(Note.F, ChordQuality.MINOR)
-        val F_SHARP = fromRootAndQuality(Note.F_SHARP, ChordQuality.MAJOR)
-        val F_SHARP_m = fromRootAndQuality(Note.F_SHARP, ChordQuality.MINOR)
-        val G = fromRootAndQuality(Note.G, ChordQuality.MAJOR)
-        val Gm = fromRootAndQuality(Note.G, ChordQuality.MINOR)
-        val G_SHARP = fromRootAndQuality(Note.G_SHARP, ChordQuality.MAJOR)
-        val G_SHARP_m = fromRootAndQuality(Note.G_SHARP, ChordQuality.MINOR)
-        val A = fromRootAndQuality(Note.A, ChordQuality.MAJOR)
-        val Am = fromRootAndQuality(Note.A, ChordQuality.MINOR)
-        val A_SHARP = fromRootAndQuality(Note.A_SHARP, ChordQuality.MAJOR)
-        val A_SHARP_m = fromRootAndQuality(Note.A_SHARP, ChordQuality.MINOR)
-        val B = fromRootAndQuality(Note.B, ChordQuality.MAJOR)
-        val Bm = fromRootAndQuality(Note.B, ChordQuality.MINOR)
 
         fun fromRootAndQuality(root: Note, quality: ChordQuality): Chord {
             val representation = voicingDictionary[Pair(root, quality)]
@@ -188,19 +160,27 @@ data class Chord(
         }
 
         fun fromString(s: String): Chord {
-            val match = chordRegex.find(s)
-                ?: throw IllegalArgumentException("Invalid chord format: $s")
+            require(s.isNotEmpty()) { "Chord string cannot be empty" }
 
-            val rootStr = match.groupValues[1]
-            val suffixStr = match.groupValues[2]
+            val structuralQualities = ChordQuality.entries
+                .filter { it.suffix.isNotEmpty() }
+                .sortedByDescending { it.suffix.length }
 
-            val root = Note.fromString(rootStr)
-            val quality = if (rootStr[0].isLowerCase() && suffixStr.isEmpty()) {
-                ChordQuality.MINOR
-            } else {
-                ChordQuality.entries.firstOrNull { it.suffix.equals(suffixStr, ignoreCase = true) }
-                    ?: throw IllegalArgumentException("Unsupported chord quality: '$suffixStr' in chord '$s'")
+            for (quality in structuralQualities) {
+                if (s.endsWith(quality.suffix, ignoreCase = true)) {
+                    val rootStr = s.substring(0, s.length - quality.suffix.length)
+                    val root = runCatching { Note.fromString(rootStr) }.getOrNull()
+                    if (root != null) {
+                        return fromRootAndQuality(root, quality)
+                    }
+                }
             }
+
+            val root = runCatching { Note.fromString(s) }.getOrNull()
+                ?: throw IllegalArgumentException("Invalid chord format or unknown root note: $s")
+
+            // Preserve your original lowercase layout rule for pure minor shorthand variants (e.g. "cis" -> C# minor)
+            val quality = if (s[0].isLowerCase()) ChordQuality.MINOR else ChordQuality.MAJOR
 
             return fromRootAndQuality(root, quality)
         }
