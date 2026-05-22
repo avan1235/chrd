@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import `in`.procyk.chrd.model.*
 import `in`.procyk.chrd.model.LinePart.*
+import `in`.procyk.chrd.ui.KeepScreenOn
 import `in`.procyk.chrd.viewmodel.SongViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -47,6 +48,8 @@ private fun AutoScrollableSongView(
     song: Song,
     modifier: Modifier = Modifier,
 ) {
+    KeepScreenOn()
+
     val songLines = remember(song) { song.sections.sumOf { it.lines.size } }
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
