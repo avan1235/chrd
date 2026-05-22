@@ -2,7 +2,6 @@ package `in`.procyk.chrd.screen
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.*
-import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -19,10 +18,9 @@ import androidx.compose.ui.unit.sp
 import `in`.procyk.chrd.model.*
 import `in`.procyk.chrd.model.LinePart.*
 import `in`.procyk.chrd.viewmodel.SongViewModel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.seconds
 
 
 @Composable
@@ -44,32 +42,45 @@ internal fun SongScreen(
     }
 }
 
-private val SCROLL_REFRESH_RATE = 1.seconds / 120
-
 @Composable
 private fun AutoScrollableSongView(
     song: Song,
     modifier: Modifier = Modifier,
 ) {
+    val songLines = remember(song) { song.sections.sumOf { it.lines.size } }
+    val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
+
     var isAutoScrolling by remember { mutableStateOf(false) }
-    var scrollBy by remember { mutableFloatStateOf(1f) }
-    var isResetAvailable by remember { mutableStateOf(false) }
+    val mutableScrollBy = remember { MutableStateFlow(1.0) }
     var clickedChord by remember { mutableStateOf<Chord?>(null) }
 
-    LaunchedEffect(isAutoScrolling, scrollBy) {
-        if (!isAutoScrolling) return@LaunchedEffect
+    val isAtBottom by remember {
+        derivedStateOf {
+            scrollState.maxValue > 0 && scrollState.value >= scrollState.maxValue
+        }
+    }
+
+    LaunchedEffect(isAutoScrolling) {
+        if (!isAutoScrolling || songLines == 0) return@LaunchedEffect
 
         try {
-            while (isActive && scrollState.value < scrollState.maxValue) {
-                scrollState.scrollBy(scrollBy)
-                delay(SCROLL_REFRESH_RATE)
+            var lastFrame = withFrameNanos { it }
+            scrollState.scroll {
+                while (isAutoScrolling && scrollState.value < scrollState.maxValue) {
+                    withFrameNanos { time ->
+                        val deltaMs = (time - lastFrame) / 1_000_000f
+                        lastFrame = time
+
+                        val totalTimeMs = (songLines * 5000f) / mutableScrollBy.value.toFloat()
+                        val pxPerMs = scrollState.maxValue.toFloat() / totalTimeMs
+
+                        scrollBy(pxPerMs * deltaMs)
+                    }
+                }
             }
         } finally {
-            if (scrollState.value >= scrollState.maxValue) {
-                isResetAvailable = true
-                isAutoScrolling = false
-            }
+            isAutoScrolling = false
         }
     }
 
@@ -80,18 +91,16 @@ private fun AutoScrollableSongView(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 AnimatedVisibility(
-                    visible = isAutoScrolling,
-                    enter = fadeIn() + slideInVertically(initialOffsetY = { fullHeight -> fullHeight / 2 }),
-                    exit = fadeOut() + slideOutVertically(targetOffsetY = { fullHeight -> fullHeight / 2 }),
+                    visible = isAutoScrolling && scrollState.maxValue > 0,
+                    enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }),
+                    exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 }),
                 ) {
                     Column(
                         horizontalAlignment = Alignment.End,
                         verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
                         SmallFloatingActionButton(
-                            onClick = {
-                                scrollBy *= 2
-                            },
+                            onClick = { mutableScrollBy.update { it * 1.5 } },
                             containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         ) {
                             Icon(
@@ -102,10 +111,10 @@ private fun AutoScrollableSongView(
 
                         SmallFloatingActionButton(
                             onClick = {
-                                val prev = scrollBy
-                                val updated = prev / 2
-                                scrollBy = if (updated > 0.1f) updated else prev
-
+                                mutableScrollBy.update {
+                                    val updated = it / 1.5
+                                    if (updated >= 1.0) updated else it
+                                }
                             },
                             containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         ) {
@@ -117,40 +126,45 @@ private fun AutoScrollableSongView(
                     }
                 }
 
-                when {
-                    isResetAvailable -> {
-                        val scope = rememberCoroutineScope()
-                        FloatingActionButton(
-                            onClick = {
-                                scope.launch {
-                                    scrollState.animateScrollTo(0)
-                                    isResetAvailable = false
-                                }
-                            },
+                AnimatedVisibility(
+                    visible = scrollState.maxValue > 0,
+                    enter = fadeIn(),
+                    exit = fadeOut(),
+                ) {
+                    when {
+                        isAtBottom -> {
+                            FloatingActionButton(
+                                onClick = {
+                                    scope.launch { scrollState.animateScrollTo(0) }
+                                },
+                                containerColor = MaterialTheme.colorScheme.primary,
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = "Restart Auto-scroll",
+                                )
+                            }
+                        }
+
+                        else -> FloatingActionButton(
+                            onClick = { isAutoScrolling = !isAutoScrolling },
                             containerColor = MaterialTheme.colorScheme.primary,
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = "Restart Auto-scroll",
+                                imageVector = if (isAutoScrolling) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                contentDescription = if (isAutoScrolling) "Pause Auto-scroll" else "Start Auto-scroll",
                             )
                         }
-                    }
-
-                    else -> FloatingActionButton(
-                        onClick = { isAutoScrolling = !isAutoScrolling },
-                        containerColor = MaterialTheme.colorScheme.primary,
-                    ) {
-                        Icon(
-                            imageVector = if (isAutoScrolling) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            contentDescription = if (isAutoScrolling) "Pause Auto-scroll" else "Start Auto-scroll",
-                        )
                     }
                 }
             }
         },
     ) { paddingValues ->
         Column(
-            modifier = modifier.fillMaxSize().padding(paddingValues).verticalScroll(scrollState)
+            modifier = modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .verticalScroll(scrollState)
                 .padding(16.dp),
         ) {
             Text(
