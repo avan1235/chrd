@@ -127,7 +127,7 @@ private fun AutoScrollableSongView(
                                     isResetAvailable = false
                                 }
                             },
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            containerColor = MaterialTheme.colorScheme.primary,
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Refresh,
@@ -138,7 +138,7 @@ private fun AutoScrollableSongView(
 
                     else -> FloatingActionButton(
                         onClick = { isAutoScrolling = !isAutoScrolling },
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        containerColor = MaterialTheme.colorScheme.primary,
                     ) {
                         Icon(
                             imageVector = if (isAutoScrolling) Icons.Default.Pause else Icons.Default.PlayArrow,
