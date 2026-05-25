@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import `in`.procyk.chrd.component.Screen
 import `in`.procyk.chrd.model.*
 import `in`.procyk.chrd.model.LinePart.*
 import `in`.procyk.chrd.ui.KeepScreenOn
@@ -87,7 +88,7 @@ private fun AutoScrollableSongView(
         }
     }
 
-    Scaffold(
+    Screen(
         floatingActionButton = {
             Column(
                 horizontalAlignment = Alignment.End,

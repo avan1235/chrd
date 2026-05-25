@@ -11,37 +11,27 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import `in`.procyk.chrd.component.ThemeSelector
-import `in`.procyk.chrd.db.AppSettings
-import `in`.procyk.chrd.db.AppSettingsRepository
+import `in`.procyk.chrd.component.Screen
 import `in`.procyk.chrd.model.SongListing
 import `in`.procyk.chrd.viewmodel.SearchViewModel
-import kotlinx.coroutines.launch
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
     viewModel: SearchViewModel,
-    settingsRepository: AppSettingsRepository,
     onSongSelected: (SongListing) -> Unit,
     containerColor: Color = MaterialTheme.colorScheme.background,
 ) {
     val query by viewModel.query.collectAsState()
     val results by viewModel.results.collectAsState()
     val isLoadingSongs by viewModel.isLoadingSongs.collectAsState()
-    val settings by settingsRepository.settings.collectAsState(initial = AppSettings())
-    val scope = rememberCoroutineScope()
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-    ) { padding ->
+    Screen { padding ->
         Box(
             modifier = Modifier
                 .padding(padding)
@@ -51,22 +41,16 @@ fun SearchScreen(
                 Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
+                reverseLayout = true,
                 contentPadding =
                     if (isLoadingSongs) PaddingValues(all = 16.dp)
                     else PaddingValues(
                         top = 16.dp,
                         start = 16.dp,
                         end = 16.dp,
-                        bottom = 88.dp,
+                        bottom = 96.dp,
                     ),
             ) {
-                item {
-                    ThemeSelector(
-                        selected = settings.themeMode,
-                        onSelect = { mode -> scope.launch { settingsRepository.setThemeMode(mode) } },
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                    )
-                }
                 items(results) { song ->
                     Card(
                         onClick = { onSongSelected(song) },

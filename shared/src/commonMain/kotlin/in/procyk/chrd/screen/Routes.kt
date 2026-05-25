@@ -14,6 +14,12 @@ sealed class Screen : NavKey {
     data object Search : Screen()
 
     @Serializable
+    data object Favorites : Screen()
+
+    @Serializable
+    data object Settings : Screen()
+
+    @Serializable
     data class SongDetails(
         val listing: SongListing,
     ) : Screen()
@@ -23,6 +29,8 @@ sealed class Screen : NavKey {
             serializersModule = SerializersModule {
                 polymorphic(NavKey::class) {
                     subclass(Search::class, Search.serializer())
+                    subclass(Favorites::class, Favorites.serializer())
+                    subclass(Settings::class, Settings.serializer())
                     subclass(SongDetails::class, SongDetails.serializer())
                 }
             }
