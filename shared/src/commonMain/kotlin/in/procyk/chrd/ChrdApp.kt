@@ -1,5 +1,6 @@
 package `in`.procyk.chrd
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,9 +11,8 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -32,43 +32,54 @@ fun ChrdApp() {
     ChrdTheme(themeMode = savedSettings.themeMode) {
         val backStack = rememberNavBackStack(Screen.SavedStateConfiguration, Screen.Search)
 
+        var isBarsVisible by remember { mutableStateOf(true) }
+        LaunchedEffect(backStack.last()) {
+            isBarsVisible = true
+        }
+
         Scaffold(
             bottomBar = {
-                NavigationBar {
-                    val currentScreen = backStack.last()
-                    NavigationBarItem(
-                        selected = currentScreen is Screen.Search || currentScreen is Screen.SongDetails,
-                        onClick = {
-                            if (currentScreen !is Screen.Search && currentScreen !is Screen.SongDetails) {
-                                backStack.clear()
-                                backStack.add(Screen.Search)
-                            }
-                        },
-                        icon = { Icon(Icons.Default.Search, contentDescription = "Songs") },
-                        label = { Text("Songs") }
-                    )
-                    NavigationBarItem(
-                        selected = currentScreen is Screen.Favorites,
-                        onClick = {
-                            if (currentScreen !is Screen.Favorites) {
-                                backStack.clear()
-                                backStack.add(Screen.Favorites)
-                            }
-                        },
-                        icon = { Icon(Icons.Default.Favorite, contentDescription = "Favorites") },
-                        label = { Text("Favorites") }
-                    )
-                    NavigationBarItem(
-                        selected = currentScreen is Screen.Settings,
-                        onClick = {
-                            if (currentScreen !is Screen.Settings) {
-                                backStack.clear()
-                                backStack.add(Screen.Settings)
-                            }
-                        },
-                        icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
-                        label = { Text("Settings") }
-                    )
+                AnimatedVisibility(
+                    visible = isBarsVisible,
+                    enter = slideInVertically(initialOffsetY = { it }) + expandVertically(expandFrom = Alignment.Bottom) + fadeIn(),
+                    exit = slideOutVertically(targetOffsetY = { it }) + shrinkVertically(shrinkTowards = Alignment.Bottom) + fadeOut(),
+                ) {
+                    NavigationBar {
+                        val currentScreen = backStack.last()
+                        NavigationBarItem(
+                            selected = currentScreen is Screen.Search || currentScreen is Screen.SongDetails,
+                            onClick = {
+                                if (currentScreen !is Screen.Search && currentScreen !is Screen.SongDetails) {
+                                    backStack.clear()
+                                    backStack.add(Screen.Search)
+                                }
+                            },
+                            icon = { Icon(Icons.Default.Search, contentDescription = "Songs") },
+                            label = { Text("Songs") }
+                        )
+                        NavigationBarItem(
+                            selected = currentScreen is Screen.Favorites,
+                            onClick = {
+                                if (currentScreen !is Screen.Favorites) {
+                                    backStack.clear()
+                                    backStack.add(Screen.Favorites)
+                                }
+                            },
+                            icon = { Icon(Icons.Default.Favorite, contentDescription = "Favorites") },
+                            label = { Text("Favorites") }
+                        )
+                        NavigationBarItem(
+                            selected = currentScreen is Screen.Settings,
+                            onClick = {
+                                if (currentScreen !is Screen.Settings) {
+                                    backStack.clear()
+                                    backStack.add(Screen.Settings)
+                                }
+                            },
+                            icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
+                            label = { Text("Settings") }
+                        )
+                    }
                 }
             }
         ) { padding ->
@@ -92,6 +103,7 @@ fun ChrdApp() {
                             viewModel = viewModel(key = destination.listing.source.toString()) {
                                 SongViewModel(destination.listing)
                             },
+                            onAutoScrollingChanged = { isBarsVisible = !it },
                         )
                     }
 

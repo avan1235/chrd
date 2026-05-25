@@ -1,5 +1,6 @@
 package `in`.procyk.chrd.component
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.*
@@ -11,6 +12,7 @@ import androidx.compose.ui.Modifier
 fun Screen(
     modifier: Modifier = Modifier,
     title: String? = null,
+    topBarVisible: Boolean = true,
     topBar: @Composable () -> Unit = {
         if (title != null) {
             TopAppBar(
@@ -22,7 +24,15 @@ fun Screen(
     content: @Composable (PaddingValues) -> Unit,
 ) {
     Scaffold(
-        topBar = topBar,
+        topBar = {
+            AnimatedVisibility(
+                visible = topBarVisible,
+                enter = slideInVertically(initialOffsetY = { -it }) + expandVertically() + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { -it }) + shrinkVertically() + fadeOut(),
+            ) {
+                topBar()
+            }
+        },
         floatingActionButton = floatingActionButton,
         modifier = modifier.fillMaxSize(),
         content = content,

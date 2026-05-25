@@ -28,6 +28,7 @@ import kotlinx.coroutines.launch
 @Composable
 internal fun SongScreen(
     viewModel: SongViewModel,
+    onAutoScrollingChanged: (Boolean) -> Unit = {},
 ) {
     val song by viewModel.song.collectAsState()
     Box(
@@ -39,7 +40,7 @@ internal fun SongScreen(
     ) {
         when (val song = song) {
             null -> CircularProgressIndicator()
-            else -> AutoScrollableSongView(song)
+            else -> AutoScrollableSongView(song, onAutoScrollingChanged = onAutoScrollingChanged)
         }
     }
 }
@@ -48,6 +49,7 @@ internal fun SongScreen(
 private fun AutoScrollableSongView(
     song: Song,
     modifier: Modifier = Modifier,
+    onAutoScrollingChanged: (Boolean) -> Unit = {},
 ) {
     KeepScreenOn()
 
@@ -66,6 +68,7 @@ private fun AutoScrollableSongView(
     }
 
     LaunchedEffect(isAutoScrolling) {
+        onAutoScrollingChanged(isAutoScrolling)
         if (!isAutoScrolling || songLines == 0) return@LaunchedEffect
 
         try {
@@ -89,6 +92,25 @@ private fun AutoScrollableSongView(
     }
 
     Screen(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Column {
+                        Text(
+                            text = song.title,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            text = "by ${song.author}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            )
+        },
+        topBarVisible = !isAutoScrolling,
         floatingActionButton = {
             Column(
                 horizontalAlignment = Alignment.End,
@@ -171,18 +193,6 @@ private fun AutoScrollableSongView(
                 .verticalScroll(scrollState)
                 .padding(16.dp),
         ) {
-            Text(
-                text = song.title,
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                text = "by ${song.author}",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 24.dp),
-            )
-
             SongChordsView(song)
 
             song.sections.forEach { section ->
