@@ -11,3 +11,9 @@ fun rememberAppSettingsRepository(): AppSettingsRepository {
     val db = rememberAppDatabase()
     return remember(db) { AppSettingsRepository(db.appSettingsDao()) }
 }
+
+@Composable
+fun rememberSongRepository(): SongRepository {
+    val db = rememberAppDatabase()
+    return remember(db) { SongRepository(db.songDao()) }
+}

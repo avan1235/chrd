@@ -21,6 +21,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import `in`.procyk.chrd.db.AppSettings
 import `in`.procyk.chrd.db.rememberAppSettingsRepository
+import `in`.procyk.chrd.db.rememberSongRepository
 import `in`.procyk.chrd.screen.*
 import `in`.procyk.chrd.viewmodel.SearchViewModel
 import `in`.procyk.chrd.viewmodel.SongViewModel
@@ -28,6 +29,7 @@ import `in`.procyk.chrd.viewmodel.SongViewModel
 @Composable
 fun ChrdApp() {
     val settingsRepository = rememberAppSettingsRepository()
+    val songRepository = rememberSongRepository()
     val savedSettings by settingsRepository.settings.collectAsState(initial = AppSettings())
     ChrdTheme(themeMode = savedSettings.themeMode) {
         val backStack = rememberNavBackStack(Screen.SavedStateConfiguration, Screen.Search)
@@ -101,14 +103,19 @@ fun ChrdApp() {
                     entry<Screen.SongDetails> { destination ->
                         SongScreen(
                             viewModel = viewModel(key = destination.listing.source.toString()) {
-                                SongViewModel(destination.listing)
+                                SongViewModel(destination.listing, songRepository)
                             },
                             onAutoScrollingChanged = { isBarsVisible = !it },
                         )
                     }
 
                     entry<Screen.Favorites> {
-                        FavoritesScreen()
+                        FavoritesScreen(
+                            repository = songRepository,
+                            onSongSelected = { listing ->
+                                backStack.add(Screen.SongDetails(listing))
+                            },
+                        )
                     }
 
                     entry<Screen.Settings> {

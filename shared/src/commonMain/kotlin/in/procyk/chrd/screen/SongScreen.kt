@@ -6,6 +6,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -40,7 +41,11 @@ internal fun SongScreen(
     ) {
         when (val song = song) {
             null -> CircularProgressIndicator()
-            else -> AutoScrollableSongView(song, onAutoScrollingChanged = onAutoScrollingChanged)
+            else -> AutoScrollableSongView(
+                song = song,
+                viewModel = viewModel,
+                onAutoScrollingChanged = onAutoScrollingChanged,
+            )
         }
     }
 }
@@ -48,6 +53,7 @@ internal fun SongScreen(
 @Composable
 private fun AutoScrollableSongView(
     song: Song,
+    viewModel: SongViewModel,
     modifier: Modifier = Modifier,
     onAutoScrollingChanged: (Boolean) -> Unit = {},
 ) {
@@ -105,6 +111,16 @@ private fun AutoScrollableSongView(
                             text = "by ${song.author}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                },
+                actions = {
+                    val isFavorite by viewModel.isFavorite.collectAsState()
+                    IconButton(onClick = viewModel::toggleFavorite) {
+                        Icon(
+                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Outlined.FavoriteBorder,
+                            contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
+                            tint = if (isFavorite) MaterialTheme.colorScheme.primary else LocalContentColor.current,
                         )
                     }
                 }

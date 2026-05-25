@@ -19,6 +19,7 @@ private fun buildAppDatabase(): AppDatabase {
         name = dbFile.absolutePath,
         factory = { AppDatabaseConstructor.initialize() },
     )
+        .addMigrations(MIGRATION_1_2)
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
         .build()

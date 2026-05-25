@@ -1,5 +1,8 @@
 package `in`.procyk.chrd.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 enum class Note(val semitones: Int) {
     C(0), C_SHARP(1), D(2), D_SHARP(3), E(4), F(5), F_SHARP(6), G(7), G_SHARP(8), A(9), A_SHARP(10), B(11);
 
@@ -42,6 +45,7 @@ enum class Note(val semitones: Int) {
     }
 }
 
+@Serializable
 enum class ChordQuality(val suffix: String) {
     MAJOR(""),
     MINOR("m"),
@@ -51,6 +55,7 @@ enum class ChordQuality(val suffix: String) {
     SUS_4("sus4")
 }
 
+@Serializable
 data class Chord(
     val root: Note,
     val quality: ChordQuality,

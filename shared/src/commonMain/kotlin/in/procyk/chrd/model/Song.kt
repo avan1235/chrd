@@ -9,6 +9,7 @@ data class SongListing(
     val title: String,
     val source: Url,
     val origin: SongsOrigin,
+    val song: Song? = null,
 )
 
 @Serializable
@@ -36,19 +37,23 @@ data class SongLine(
 
 @Serializable
 sealed interface LinePart {
+    @Serializable
     data class Lyric(
         val text: String,
     ) : LinePart
 
+    @Serializable
     data class ChordedLyric(
         val text: String,
         val chord: Chord,
     ) : LinePart
 
+    @Serializable
     data class ChordOverWhitespace(
         val chord: Chord,
     ) : LinePart
 
+    @Serializable
     data class ChordInText(
         val chord: Chord,
     ) : LinePart
