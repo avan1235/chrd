@@ -20,7 +20,7 @@ private fun buildAppDatabase(context: Context): AppDatabase {
         context = context,
         name = dbFile.absolutePath,
     )
-        .addMigrations(MIGRATION_1_2)
+        .addMigrations(*MIGRATIONS)
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
         .build()

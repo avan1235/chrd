@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import `in`.procyk.chrd.component.Screen
+import `in`.procyk.chrd.component.liquid.LiquidBottomTabsSpacer
 import `in`.procyk.chrd.model.SongListing
 import `in`.procyk.chrd.viewmodel.SearchViewModel
 
@@ -25,6 +26,7 @@ import `in`.procyk.chrd.viewmodel.SearchViewModel
 fun SearchScreen(
     viewModel: SearchViewModel,
     onSongSelected: (SongListing) -> Unit,
+    useLiquidNavigation: Boolean = false,
     containerColor: Color = MaterialTheme.colorScheme.background,
 ) {
     val query by viewModel.query.collectAsState()
@@ -48,7 +50,7 @@ fun SearchScreen(
                         top = 16.dp,
                         start = 16.dp,
                         end = 16.dp,
-                        bottom = 96.dp,
+                        bottom = if (useLiquidNavigation) 176.dp else 96.dp,
                     ),
             ) {
                 items(results) { song ->
@@ -86,6 +88,7 @@ fun SearchScreen(
             Row(
                 modifier = Modifier
                     .padding(16.dp)
+                    .padding(bottom = if (useLiquidNavigation) 88.dp else 0.dp)
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,

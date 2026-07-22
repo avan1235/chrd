@@ -15,21 +15,29 @@ class AppSettingsRepository(private val dao: AppSettingsDao) {
         dao.upsert(current.copy(themeMode = mode.name))
     }
 
+    suspend fun setUseLiquidNavigation(use: Boolean) {
+        val current = currentEntity()
+        dao.upsert(current.copy(useLiquidNavigation = use))
+    }
+
     suspend fun current(): AppSettings = settings.first()
 
     private suspend fun currentEntity(): AppSettingsEntity {
         val current = settings.first()
         return AppSettingsEntity(
             themeMode = current.themeMode.name,
+            useLiquidNavigation = current.useLiquidNavigation,
         )
     }
 }
 
 data class AppSettings(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val useLiquidNavigation: Boolean = `in`.procyk.chrd.useLiquidNavigation,
 )
 
 private fun AppSettingsEntity.toModel(): AppSettings =
     AppSettings(
         themeMode = runCatching { ThemeMode.valueOf(themeMode) }.getOrDefault(ThemeMode.SYSTEM),
+        useLiquidNavigation = this@toModel.useLiquidNavigation,
     )

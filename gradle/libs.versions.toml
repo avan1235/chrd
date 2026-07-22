@@ -28,6 +28,8 @@ material3 = "1.11.0-alpha07"
 navigation3 = "1.1.1"
 room = "3.0.0-alpha05"
 sqlite = "2.7.0-alpha05"
+backdrop = "2.0.0"
+shapes = "1.2.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -72,6 +74,8 @@ room-runtime = { module = "androidx.room3:room3-runtime", version.ref = "room" }
 room-compiler = { module = "androidx.room3:room3-compiler", version.ref = "room" }
 sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "sqlite" }
 sqlite-web = { module = "androidx.sqlite:sqlite-web", version.ref = "sqlite" }
+backdrop = { module = "io.github.kyant0:backdrop", version.ref = "backdrop" }
+shapes = { module = "io.github.kyant0:shapes", version.ref = "shapes" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

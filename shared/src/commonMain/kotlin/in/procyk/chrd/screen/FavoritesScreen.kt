@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import `in`.procyk.chrd.component.Screen
+import `in`.procyk.chrd.component.liquid.LiquidBottomTabsSpacer
 import `in`.procyk.chrd.db.SongRepository
 import `in`.procyk.chrd.model.SongListing
 import kotlinx.coroutines.launch
@@ -23,6 +24,7 @@ import kotlinx.coroutines.launch
 fun FavoritesScreen(
     repository: SongRepository,
     onSongSelected: (SongListing) -> Unit,
+    useLiquidNavigation: Boolean = false,
 ) {
     val favorites by repository.favorites.collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
@@ -85,6 +87,9 @@ fun FavoritesScreen(
                             }
                         }
                     }
+                }
+                item {
+                    LiquidBottomTabsSpacer(useLiquidNavigation)
                 }
             }
         }
