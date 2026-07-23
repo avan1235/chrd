@@ -35,7 +35,11 @@ class AppSettingsRepository(private val dao: AppSettingsDao) {
 data class AppSettings(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val useLiquidNavigation: Boolean = useLiquidNavigationDefault,
-)
+) {
+    companion object {
+        val DEFAULT: AppSettings = AppSettings()
+    }
+}
 
 private fun AppSettingsEntity.toModel(): AppSettings =
     AppSettings(

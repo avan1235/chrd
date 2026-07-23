@@ -32,6 +32,8 @@ import `in`.procyk.chrd.db.ThemeMode
 import `in`.procyk.chrd.db.rememberAppSettingsRepository
 import `in`.procyk.chrd.db.rememberSongRepository
 import `in`.procyk.chrd.screen.*
+import `in`.procyk.chrd.viewmodel.AppSettingsViewModel
+import `in`.procyk.chrd.viewmodel.FavoritesViewModel
 import `in`.procyk.chrd.viewmodel.SearchViewModel
 import `in`.procyk.chrd.viewmodel.SongViewModel
 
@@ -138,18 +140,16 @@ fun ChrdApp() {
 
                         entry<Screen.Favorites> {
                             FavoritesScreen(
-                                repository = songRepository,
+                                viewModel = viewModel { FavoritesViewModel(songRepository, settingsRepository) },
                                 onSongSelected = { listing ->
                                     backStack.add(Screen.SongDetails(listing))
                                 },
-                                useLiquidNavigation = savedSettings.useLiquidNavigation,
                             )
                         }
 
                         entry<Screen.Settings> {
-                            SettingsScreen(
-                                settingsRepository = settingsRepository,
-                                useLiquidNavigation = savedSettings.useLiquidNavigation,
+                            AppSettingsScreen(
+                                viewModel = viewModel { AppSettingsViewModel(settingsRepository) },
                             )
                         }
                     },

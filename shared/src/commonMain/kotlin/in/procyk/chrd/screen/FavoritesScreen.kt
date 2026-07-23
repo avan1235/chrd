@@ -9,27 +9,22 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import `in`.procyk.chrd.component.Screen
 import `in`.procyk.chrd.component.liquid.LiquidBottomTabsSpacer
-import `in`.procyk.chrd.db.SongRepository
 import `in`.procyk.chrd.model.SongListing
-import kotlinx.coroutines.launch
+import `in`.procyk.chrd.viewmodel.FavoritesViewModel
 
 @Composable
 fun FavoritesScreen(
-    repository: SongRepository,
+    viewModel: FavoritesViewModel,
     onSongSelected: (SongListing) -> Unit,
-    useLiquidNavigation: Boolean = false,
 ) {
-    val favorites by repository.favorites.collectAsState(initial = emptyList())
-    val scope = rememberCoroutineScope()
-
     Screen(title = "Favorites") { padding ->
+        val favorites by viewModel.favorites.collectAsState()
         if (favorites.isEmpty()) {
             Box(
                 modifier = Modifier
@@ -77,18 +72,17 @@ fun FavoritesScreen(
                                 )
                             }
 
-                            IconButton(onClick = {
-                                scope.launch { repository.removeFavorite(listing) }
-                            }) {
+                            IconButton(onClick = { viewModel.removeFavorite(listing) }) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
-                                    contentDescription = "Remove from favorites"
+                                    contentDescription = "Remove from favorites",
                                 )
                             }
                         }
                     }
                 }
                 item {
+                    val useLiquidNavigation by viewModel.useLiquidNavigation.collectAsState()
                     LiquidBottomTabsSpacer(useLiquidNavigation)
                 }
             }
