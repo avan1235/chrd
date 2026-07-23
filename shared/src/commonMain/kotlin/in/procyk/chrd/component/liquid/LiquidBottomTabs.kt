@@ -2,6 +2,7 @@ package `in`.procyk.chrd.component.liquid
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.EaseOut
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
@@ -42,13 +43,12 @@ import kotlin.math.sign
 fun LiquidBottomTabsSpacer(
     useLiquidNavigation: Boolean,
 ) {
-    if (useLiquidNavigation) {
-        Box(
-            Modifier
-                .height(88.dp)
-                .fillMaxWidth(),
-        )
-    }
+    val height by animateDpAsState(if (useLiquidNavigation) 88.dp else 0.dp)
+    Box(
+        Modifier
+            .height(height)
+            .fillMaxWidth(),
+    )
 }
 
 @Composable

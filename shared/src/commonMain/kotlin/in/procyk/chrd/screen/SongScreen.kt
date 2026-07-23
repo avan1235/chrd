@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import `in`.procyk.chrd.component.Screen
+import `in`.procyk.chrd.component.liquid.LiquidBottomTabsSpacer
 import `in`.procyk.chrd.model.*
 import `in`.procyk.chrd.model.LinePart.*
 import `in`.procyk.chrd.ui.KeepScreenOn
@@ -29,7 +30,8 @@ import kotlinx.coroutines.launch
 @Composable
 internal fun SongScreen(
     viewModel: SongViewModel,
-    onAutoScrollingChanged: (Boolean) -> Unit = {},
+    isAutoScrolling: Boolean,
+    onAutoScrollingChanged: (Boolean) -> Unit,
 ) {
     val song by viewModel.song.collectAsState()
     Box(
@@ -44,6 +46,7 @@ internal fun SongScreen(
             else -> AutoScrollableSongView(
                 song = song,
                 viewModel = viewModel,
+                isAutoScrolling = isAutoScrolling,
                 onAutoScrollingChanged = onAutoScrollingChanged,
             )
         }
@@ -55,7 +58,8 @@ private fun AutoScrollableSongView(
     song: Song,
     viewModel: SongViewModel,
     modifier: Modifier = Modifier,
-    onAutoScrollingChanged: (Boolean) -> Unit = {},
+    isAutoScrolling: Boolean,
+    onAutoScrollingChanged: (Boolean) -> Unit,
 ) {
     KeepScreenOn()
 
@@ -63,7 +67,6 @@ private fun AutoScrollableSongView(
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
 
-    var isAutoScrolling by remember { mutableStateOf(false) }
     val mutableScrollBy = remember { MutableStateFlow(1.0) }
     var clickedChord by remember { mutableStateOf<Chord?>(null) }
 
@@ -74,7 +77,6 @@ private fun AutoScrollableSongView(
     }
 
     LaunchedEffect(isAutoScrolling) {
-        onAutoScrollingChanged(isAutoScrolling)
         if (!isAutoScrolling || songLines == 0) return@LaunchedEffect
 
         try {
@@ -93,7 +95,7 @@ private fun AutoScrollableSongView(
                 }
             }
         } finally {
-            isAutoScrolling = false
+            onAutoScrollingChanged(false)
         }
     }
 
@@ -123,7 +125,7 @@ private fun AutoScrollableSongView(
                             tint = if (isFavorite) MaterialTheme.colorScheme.primary else LocalContentColor.current,
                         )
                     }
-                }
+                },
             )
         },
         topBarVisible = !isAutoScrolling,
@@ -189,7 +191,7 @@ private fun AutoScrollableSongView(
                         }
 
                         else -> FloatingActionButton(
-                            onClick = { isAutoScrolling = !isAutoScrolling },
+                            onClick = { onAutoScrollingChanged(!isAutoScrolling) },
                             containerColor = MaterialTheme.colorScheme.primary,
                         ) {
                             Icon(
@@ -199,6 +201,8 @@ private fun AutoScrollableSongView(
                         }
                     }
                 }
+                val useLiquidNavigation by viewModel.useLiquidNavigation.collectAsState()
+                LiquidBottomTabsSpacer(useLiquidNavigation && !isAutoScrolling)
             }
 
         },

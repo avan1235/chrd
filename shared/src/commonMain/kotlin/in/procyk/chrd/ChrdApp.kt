@@ -54,16 +54,16 @@ fun ChrdApp() {
     ChrdTheme(themeMode = savedSettings.themeMode) {
         val backStack = rememberNavBackStack(Screen.SavedStateConfiguration, Screen.Search)
 
-        var isBarsVisible by remember { mutableStateOf(true) }
+        var isAutoScrolling by remember { mutableStateOf(true) }
         LaunchedEffect(backStack.last()) {
-            isBarsVisible = true
+            isAutoScrolling = false
         }
 
         Scaffold(
             bottomBar = {
                 if (!savedSettings.useLiquidNavigation) {
                     AnimatedVisibility(
-                        visible = isBarsVisible,
+                        visible = !isAutoScrolling,
                         enter = slideInVertically(initialOffsetY = { it }) + expandVertically(expandFrom = Alignment.Bottom) + fadeIn(),
                         exit = slideOutVertically(targetOffsetY = { it }) + shrinkVertically(shrinkTowards = Alignment.Bottom) + fadeOut(),
                     ) {
@@ -132,9 +132,10 @@ fun ChrdApp() {
                         entry<Screen.SongDetails> { destination ->
                             SongScreen(
                                 viewModel = viewModel(key = destination.listing.source.toString()) {
-                                    SongViewModel(destination.listing, songRepository)
+                                    SongViewModel(destination.listing, songRepository, settingsRepository)
                                 },
-                                onAutoScrollingChanged = { isBarsVisible = !it },
+                                isAutoScrolling = isAutoScrolling,
+                                onAutoScrollingChanged = { isAutoScrolling = it },
                             )
                         }
 
@@ -157,7 +158,7 @@ fun ChrdApp() {
 
                 if (savedSettings.useLiquidNavigation) {
                     AnimatedVisibility(
-                        visible = isBarsVisible,
+                        visible = !isAutoScrolling,
                         enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
                         exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
                         modifier = Modifier.align(Alignment.BottomCenter),
