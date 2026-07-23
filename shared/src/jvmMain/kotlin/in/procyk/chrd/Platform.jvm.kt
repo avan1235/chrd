@@ -1,3 +1,3 @@
 package `in`.procyk.chrd
 
-actual val useLiquidNavigation: Boolean = true
+actual val useLiquidNavigationDefault: Boolean = true

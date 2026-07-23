@@ -1,5 +1,6 @@
 package `in`.procyk.chrd.db
 
+import `in`.procyk.chrd.useLiquidNavigationDefault
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -33,7 +34,7 @@ class AppSettingsRepository(private val dao: AppSettingsDao) {
 
 data class AppSettings(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
-    val useLiquidNavigation: Boolean = `in`.procyk.chrd.useLiquidNavigation,
+    val useLiquidNavigation: Boolean = useLiquidNavigationDefault,
 )
 
 private fun AppSettingsEntity.toModel(): AppSettings =

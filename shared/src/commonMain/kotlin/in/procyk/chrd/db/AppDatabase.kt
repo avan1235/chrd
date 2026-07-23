@@ -7,7 +7,7 @@ import androidx.room3.RoomDatabaseConstructor
 import androidx.room3.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
-import `in`.procyk.chrd.useLiquidNavigation
+import `in`.procyk.chrd.useLiquidNavigationDefault
 
 @Database(
     entities = [AppSettingsEntity::class, SongEntity::class],
@@ -31,7 +31,7 @@ private val MIGRATION_2_3 = object : Migration(2, 3) {
         connection.execSQL(
             "ALTER TABLE `app_settings` " +
                     "ADD COLUMN useLiquidNavigation " +
-                    "INTEGER NOT NULL DEFAULT(${if (useLiquidNavigation) "1" else "0"})",
+                    "INTEGER NOT NULL DEFAULT(${if (useLiquidNavigationDefault) "1" else "0"})",
         )
     }
 }

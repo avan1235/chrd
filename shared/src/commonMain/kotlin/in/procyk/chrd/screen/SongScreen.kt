@@ -200,6 +200,7 @@ private fun AutoScrollableSongView(
                     }
                 }
             }
+
         },
     ) { paddingValues ->
         Column(

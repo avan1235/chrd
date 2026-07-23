@@ -1,3 +1,3 @@
 package `in`.procyk.chrd
 
-expect val useLiquidNavigation: Boolean
+expect val useLiquidNavigationDefault: Boolean
