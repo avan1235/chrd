@@ -40,14 +40,14 @@ jobs:
           export SUBVERSION_PL_SONGS_ORIGIN_URL=${{ secrets.SUBVERSION_PL_SONGS_ORIGIN_URL }}
           export SUBVERSION_EN_SONGS_ORIGIN_URL=${{ secrets.SUBVERSION_EN_SONGS_ORIGIN_URL }}
           chmod +x ./gradlew
-          ./gradlew webApp:composeCompatibilityBrowserDistribution --no-daemon --build-cache
+          ./gradlew webApp:wasmJsBrowserDistribution --no-daemon --build-cache
         env:
           VERSION: ${{ env.MAJOR }}.${{ env.MINOR }}.${{ env.PATCH }}
 
       - name: Inject Cache Version into Service Worker
         if: job.status == 'success'
         run: |
-          SW_PATH="./webApp/build/dist/composeWebCompatibility/productionExecutable/service-worker.js"
+          SW_PATH="./webApp/build/dist/wasmJs/productionExecutable/service-worker.js"
           NEW_VERSION="v${{ env.MAJOR }}.${{ env.MINOR }}.${{ env.PATCH }}"
           
           echo "Replacing placeholder with $NEW_VERSION in $SW_PATH"
@@ -58,6 +58,6 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./webApp/build/dist/composeWebCompatibility/productionExecutable
+          publish_dir: ./webApp/build/dist/wasmJs/productionExecutable
           force_orphan: true
           cname: chrd.procyk.in
