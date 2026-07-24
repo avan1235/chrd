@@ -1,6 +1,8 @@
 package `in`.procyk.chrd.screen
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -22,9 +24,8 @@ import `in`.procyk.chrd.model.*
 import `in`.procyk.chrd.model.LinePart.*
 import `in`.procyk.chrd.ui.KeepScreenOn
 import `in`.procyk.chrd.viewmodel.SongViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.coroutines.cancellation.CancellationException
 
 
 @Composable
@@ -67,7 +68,7 @@ private fun AutoScrollableSongView(
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
 
-    val mutableScrollBy = remember { MutableStateFlow(1.0) }
+    var speedMultiplier by remember { mutableFloatStateOf(1f) }
     var clickedChord by remember { mutableStateOf<Chord?>(null) }
 
     val isAtBottom by remember {
@@ -76,25 +77,32 @@ private fun AutoScrollableSongView(
         }
     }
 
-    LaunchedEffect(isAutoScrolling) {
-        if (!isAutoScrolling || songLines == 0) return@LaunchedEffect
+    LaunchedEffect(isAutoScrolling, speedMultiplier, scrollState.maxValue) {
+        if (!isAutoScrolling || scrollState.maxValue <= 0 || songLines == 0) return@LaunchedEffect
 
-        try {
-            var lastFrame = withFrameNanos { it }
-            scrollState.scroll {
-                while (isAutoScrolling && scrollState.value < scrollState.maxValue) {
-                    withFrameNanos { time ->
-                        val deltaMs = (time - lastFrame) / 1_000_000f
-                        lastFrame = time
+        val remainingPixels = scrollState.maxValue - scrollState.value
 
-                        val totalTimeMs = (songLines * 5000f) / mutableScrollBy.value.toFloat()
-                        val pxPerMs = scrollState.maxValue.toFloat() / totalTimeMs
+        if (remainingPixels > 0) {
+            val totalTimeMs = (songLines * 5000f) / speedMultiplier
 
-                        scrollBy(pxPerMs * deltaMs)
-                    }
-                }
+            val fractionRemaining = remainingPixels.toFloat() / scrollState.maxValue.toFloat()
+            val durationMs = (totalTimeMs * fractionRemaining).toInt()
+
+            try {
+                scrollState.animateScrollTo(
+                    value = scrollState.maxValue,
+                    animationSpec = tween(
+                        durationMillis = durationMs,
+                        easing = LinearEasing,
+                    ),
+                )
+                onAutoScrollingChanged(false)
+            } catch (e: CancellationException) {
+                if (!scrollState.isScrollInProgress) throw e
+
+                onAutoScrollingChanged(false)
             }
-        } finally {
+        } else {
             onAutoScrollingChanged(false)
         }
     }
@@ -144,7 +152,7 @@ private fun AutoScrollableSongView(
                         verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
                         SmallFloatingActionButton(
-                            onClick = { mutableScrollBy.update { it * 1.5 } },
+                            onClick = { speedMultiplier *= 1.5f },
                             containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         ) {
                             Icon(
@@ -154,12 +162,8 @@ private fun AutoScrollableSongView(
                         }
 
                         SmallFloatingActionButton(
-                            onClick = {
-                                mutableScrollBy.update {
-                                    val updated = it / 1.5
-                                    if (updated >= 1.0) updated else it
-                                }
-                            },
+                            // Prevent speed from dropping to 0
+                            onClick = { speedMultiplier = maxOf(0.1f, speedMultiplier / 1.5f) },
                             containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         ) {
                             Icon(
