@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import `in`.procyk.chrd.ChrdFonts
 import `in`.procyk.chrd.component.Screen
 import `in`.procyk.chrd.component.liquid.LiquidBottomTabsSpacer
 import `in`.procyk.chrd.model.*
@@ -321,6 +322,7 @@ private fun LinePartView(part: LinePart, isChorus: Boolean, onChordClick: (Chord
         Text(
             text = chordTextTop,
             color = chordColor,
+            fontFamily = ChrdFonts.mono,
             fontWeight = FontWeight.Bold,
             fontSize = 16.sp,
             modifier = if (chordTop != null) {
@@ -343,6 +345,7 @@ private fun LinePartView(part: LinePart, isChorus: Boolean, onChordClick: (Chord
         Text(
             text = textBottom,
             color = if (chordBottom != null) chordColor else lyricColor,
+            fontFamily = ChrdFonts.mono,
             fontWeight = if (chordBottom != null) FontWeight.Bold else lyricFontWeight,
             fontSize = 16.sp,
             modifier = if (chordBottom != null) {
@@ -384,6 +387,7 @@ private fun SongChordsView(song: Song) {
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary,
+                        fontFamily = ChrdFonts.mono,
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     ChordDiagram(chord)

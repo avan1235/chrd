@@ -2,31 +2,14 @@ package `in`.procyk.chrd
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.lightColorScheme
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.Typography
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
+import chrd.shared.generated.resources.*
 import `in`.procyk.chrd.db.ThemeMode
-import chrd.shared.generated.resources.JetBrainsMono_Bold
-import chrd.shared.generated.resources.JetBrainsMono_BoldItalic
-import chrd.shared.generated.resources.JetBrainsMono_ExtraBold
-import chrd.shared.generated.resources.JetBrainsMono_ExtraBoldItalic
-import chrd.shared.generated.resources.JetBrainsMono_ExtraLight
-import chrd.shared.generated.resources.JetBrainsMono_ExtraLightItalic
-import chrd.shared.generated.resources.JetBrainsMono_Italic
-import chrd.shared.generated.resources.JetBrainsMono_Light
-import chrd.shared.generated.resources.JetBrainsMono_LightItalic
-import chrd.shared.generated.resources.JetBrainsMono_Medium
-import chrd.shared.generated.resources.JetBrainsMono_MediumItalic
-import chrd.shared.generated.resources.JetBrainsMono_Regular
-import chrd.shared.generated.resources.JetBrainsMono_SemiBold
-import chrd.shared.generated.resources.JetBrainsMono_SemiBoldItalic
-import chrd.shared.generated.resources.JetBrainsMono_Thin
-import chrd.shared.generated.resources.JetBrainsMono_ThinItalic
-import chrd.shared.generated.resources.Res
 import org.jetbrains.compose.resources.Font
 
 private val primaryLight = Color(0xFF4355B9)
@@ -180,10 +163,34 @@ private val darkScheme = darkColorScheme(
 
 private val baseline = Typography()
 
+internal object ChrdFonts {
+    val mono: FontFamily
+        @Composable
+        get() = FontFamily(
+            Font(Res.font.JetBrainsMono_Bold),
+            Font(Res.font.JetBrainsMono_BoldItalic),
+            Font(Res.font.JetBrainsMono_ExtraBold),
+            Font(Res.font.JetBrainsMono_ExtraBoldItalic),
+            Font(Res.font.JetBrainsMono_ExtraLight),
+            Font(Res.font.JetBrainsMono_ExtraLightItalic),
+            Font(Res.font.JetBrainsMono_Italic),
+            Font(Res.font.JetBrainsMono_Light),
+            Font(Res.font.JetBrainsMono_LightItalic),
+            Font(Res.font.JetBrainsMono_Medium),
+            Font(Res.font.JetBrainsMono_MediumItalic),
+            Font(Res.font.JetBrainsMono_Regular),
+            Font(Res.font.JetBrainsMono_SemiBold),
+            Font(Res.font.JetBrainsMono_SemiBoldItalic),
+            Font(Res.font.JetBrainsMono_Thin),
+            Font(Res.font.JetBrainsMono_ThinItalic),
+        )
+
+}
+
 @Composable
 internal fun ChrdTheme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
-    content: @Composable() () -> Unit
+    content: @Composable() () -> Unit,
 ) {
     val darkTheme = when (themeMode) {
         ThemeMode.SYSTEM -> isSystemInDarkTheme()
@@ -195,48 +202,8 @@ internal fun ChrdTheme(
         else -> lightScheme
     }
 
-    val jetBrainsMonoFont = FontFamily(
-        Font(Res.font.JetBrainsMono_Bold),
-        Font(Res.font.JetBrainsMono_BoldItalic),
-        Font(Res.font.JetBrainsMono_ExtraBold),
-        Font(Res.font.JetBrainsMono_ExtraBoldItalic),
-        Font(Res.font.JetBrainsMono_ExtraLight),
-        Font(Res.font.JetBrainsMono_ExtraLightItalic),
-        Font(Res.font.JetBrainsMono_Italic),
-        Font(Res.font.JetBrainsMono_Light),
-        Font(Res.font.JetBrainsMono_LightItalic),
-        Font(Res.font.JetBrainsMono_Medium),
-        Font(Res.font.JetBrainsMono_MediumItalic),
-        Font(Res.font.JetBrainsMono_Regular),
-        Font(Res.font.JetBrainsMono_SemiBold),
-        Font(Res.font.JetBrainsMono_SemiBoldItalic),
-        Font(Res.font.JetBrainsMono_Thin),
-        Font(Res.font.JetBrainsMono_ThinItalic),
-    )
-
-    val typography = remember(jetBrainsMonoFont) {
-        Typography(
-            displayLarge = baseline.displayLarge.copy(fontFamily = jetBrainsMonoFont),
-            displayMedium = baseline.displayMedium.copy(fontFamily = jetBrainsMonoFont),
-            displaySmall = baseline.displaySmall.copy(fontFamily = jetBrainsMonoFont),
-            headlineLarge = baseline.headlineLarge.copy(fontFamily = jetBrainsMonoFont),
-            headlineMedium = baseline.headlineMedium.copy(fontFamily = jetBrainsMonoFont),
-            headlineSmall = baseline.headlineSmall.copy(fontFamily = jetBrainsMonoFont),
-            titleLarge = baseline.titleLarge.copy(fontFamily = jetBrainsMonoFont),
-            titleMedium = baseline.titleMedium.copy(fontFamily = jetBrainsMonoFont),
-            titleSmall = baseline.titleSmall.copy(fontFamily = jetBrainsMonoFont),
-            bodyLarge = baseline.bodyLarge.copy(fontFamily = jetBrainsMonoFont),
-            bodyMedium = baseline.bodyMedium.copy(fontFamily = jetBrainsMonoFont),
-            bodySmall = baseline.bodySmall.copy(fontFamily = jetBrainsMonoFont),
-            labelLarge = baseline.labelLarge.copy(fontFamily = jetBrainsMonoFont),
-            labelMedium = baseline.labelMedium.copy(fontFamily = jetBrainsMonoFont),
-            labelSmall = baseline.labelSmall.copy(fontFamily = jetBrainsMonoFont),
-        )
-    }
-
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = typography,
-        content = content
+        content = content,
     )
 }
