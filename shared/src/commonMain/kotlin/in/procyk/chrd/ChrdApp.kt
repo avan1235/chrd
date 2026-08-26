@@ -109,7 +109,9 @@ fun ChrdApp() {
         ) { padding ->
             val backdrop = rememberLayerBackdrop()
             Box(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .windowInsetsPadding(if (!isAutoScrolling) WindowInsets(top = 40.dp) else WindowInsets())
+                    .fillMaxSize(),
             ) {
                 NavDisplay(
                     modifier = Modifier.padding(padding)
