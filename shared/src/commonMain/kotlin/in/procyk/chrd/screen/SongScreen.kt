@@ -1,9 +1,9 @@
 package `in`.procyk.chrd.screen
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.*
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -13,8 +13,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.keepScreenOn
 import androidx.compose.ui.text.font.FontWeight
@@ -28,9 +26,8 @@ import `in`.procyk.chrd.model.*
 import `in`.procyk.chrd.model.LinePart.*
 import `in`.procyk.chrd.ui.VerticalMarqueeSpacing
 import `in`.procyk.chrd.ui.basicVerticalMarquee
+import `in`.procyk.chrd.ui.rememberVerticalMarqueeState
 import `in`.procyk.chrd.viewmodel.SongViewModel
-import kotlinx.coroutines.launch
-import kotlin.coroutines.cancellation.CancellationException
 
 
 @Composable
@@ -67,19 +64,14 @@ private fun AutoScrollableSongView(
     isFullScreen: Boolean,
     onAutoScrollingChanged: (Boolean) -> Unit,
 ) {
-    val songLines = remember(song) { song.sections.sumOf { it.lines.size } }
-    val scope = rememberCoroutineScope()
-    val scrollState = rememberScrollState()
+    val marqueeState = rememberVerticalMarqueeState(initialIsPlaying = isFullScreen)
+
+    LaunchedEffect(isFullScreen) {
+        marqueeState.isPlaying = isFullScreen
+    }
 
     var speedMultiplier by remember { mutableFloatStateOf(1f) }
     var clickedChord by remember { mutableStateOf<Chord?>(null) }
-    val focusRequester = remember { FocusRequester() }
-
-    val isAtBottom by remember {
-        derivedStateOf {
-            scrollState.maxValue > 0 && scrollState.value >= scrollState.maxValue
-        }
-    }
 
     Screen(
         modifier = modifier.keepScreenOn(),
@@ -118,7 +110,7 @@ private fun AutoScrollableSongView(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 AnimatedVisibility(
-                    visible = isFullScreen && scrollState.maxValue > 0,
+                    visible = isFullScreen && marqueeState.maxOffset > 0f,
                     enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }),
                     exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 }),
                 ) {
@@ -150,39 +142,18 @@ private fun AutoScrollableSongView(
                 }
 
                 AnimatedVisibility(
-                    visible = scrollState.maxValue > 0,
+                    visible = marqueeState.maxOffset > 0f,
                     enter = fadeIn(),
                     exit = fadeOut(),
                 ) {
-                    when {
-                        isAtBottom -> {
-                            FloatingActionButton(
-                                onClick = {
-                                    scope.launch { scrollState.animateScrollTo(0) }
-                                },
-                                containerColor = MaterialTheme.colorScheme.primary,
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Refresh,
-                                    contentDescription = "Restart Auto-scroll",
-                                )
-                            }
-                        }
-
-                        else -> FloatingActionButton(
-                            onClick = {
-                                val updated = !isFullScreen
-                                onAutoScrollingChanged(updated)
-                                if (updated) focusRequester.requestFocus()
-                                else focusRequester.freeFocus()
-                            },
-                            containerColor = MaterialTheme.colorScheme.primary,
-                        ) {
-                            Icon(
-                                imageVector = if (isFullScreen) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                contentDescription = if (isFullScreen) "Pause Auto-scroll" else "Start Auto-scroll",
-                            )
-                        }
+                    FloatingActionButton(
+                        onClick = { onAutoScrollingChanged(!isFullScreen) },
+                        containerColor = MaterialTheme.colorScheme.primary,
+                    ) {
+                        Icon(
+                            imageVector = if (isFullScreen) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            contentDescription = if (isFullScreen) "Pause Auto-scroll" else "Start Auto-scroll",
+                        )
                     }
                 }
                 val useLiquidNavigation by viewModel.useLiquidNavigation.collectAsState()
@@ -195,17 +166,16 @@ private fun AutoScrollableSongView(
             modifier = modifier
                 .basicVerticalMarquee(
                     iterations = 1,
-                    animationMode = MarqueeAnimationMode.WhileFocused,
                     repeatDelayMillis = 0,
                     initialDelayMillis = 0,
                     spacing = VerticalMarqueeSpacing(0.dp),
-                    velocity = 40.dp * speedMultiplier
+                    velocity = 40.dp * speedMultiplier,
+                    showSecondCopy = false,
+                    state = marqueeState,
                 )
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp)
-                .focusRequester(focusRequester)
-                .focusable(),
+                .padding(16.dp),
         ) {
             SongChordsView(song)
 

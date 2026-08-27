@@ -1,6 +1,6 @@
 package `in`.procyk.chrd.ui
 
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.MarqueeAnimationMode
 import androidx.compose.foundation.MarqueeAnimationMode.Companion.Immediately
 import androidx.compose.foundation.MarqueeAnimationMode.Companion.WhileFocused
@@ -23,39 +23,42 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.absoluteValue
-import kotlin.math.ceil
 import kotlin.math.roundToInt
 
 object VerticalMarqueeDefaults {
-    val Iterations: Int = 3
-    val RepeatDelayMillis: Int = 1_200
+    const val Iterations: Int = 3
+    const val RepeatDelayMillis: Int = 1_200
     val Spacing: VerticalMarqueeSpacing = VerticalMarqueeSpacing.fractionOfContainer(1f / 3f)
     val Velocity: Dp = 30.dp
+    const val ShowSecondCopy: Boolean = true
 }
 
-/**
- * Applies an animated marquee effect to the modified content if it's too tall to fit in the
- * available space. This modifier has no effect if the content fits in the max constraints. The
- * content will be measured with unbounded height.
- *
- * @param iterations The number of times to repeat the animation. `Int.MAX_VALUE` will repeat
- *   forever, and 0 will disable animation.
- * @param animationMode Whether the marquee should start animating [Immediately] or only
- *   [WhileFocused].
- * @param repeatDelayMillis The duration to wait before starting each subsequent iteration, in millis.
- * @param initialDelayMillis The duration to wait before starting the first iteration.
- * @param spacing A [VerticalMarqueeSpacing] that specifies how much space to leave at the end of the
- *   content before showing the beginning again.
- * @param velocity The speed of the animation in dps / second.
- */
+@Stable
+class VerticalMarqueeState(
+    initialIsPlaying: Boolean = false,
+) {
+    var offset: Float by mutableFloatStateOf(0f)
+        internal set
+    var maxOffset: Float by mutableFloatStateOf(0f)
+        internal set
+    var isPlaying: Boolean by mutableStateOf(initialIsPlaying)
+}
+
+@Composable
+fun rememberVerticalMarqueeState(initialIsPlaying: Boolean = false): VerticalMarqueeState {
+    return remember { VerticalMarqueeState(initialIsPlaying) }
+}
+
 @Stable
 fun Modifier.basicVerticalMarquee(
     iterations: Int = VerticalMarqueeDefaults.Iterations,
     animationMode: MarqueeAnimationMode = Immediately,
     repeatDelayMillis: Int = VerticalMarqueeDefaults.RepeatDelayMillis,
     initialDelayMillis: Int = if (animationMode == Immediately) repeatDelayMillis else 0,
-    spacing: VerticalMarqueeSpacing = VerticalMarqueeDefaults.Spacing,
+    spacing: VerticalMarqueeSpacing = VerticalMarqueeSpacing.fractionOfContainer(1f),
     velocity: Dp = VerticalMarqueeDefaults.Velocity,
+    showSecondCopy: Boolean = VerticalMarqueeDefaults.ShowSecondCopy,
+    state: VerticalMarqueeState? = null,
 ): Modifier =
     this then
             VerticalMarqueeModifierElement(
@@ -65,6 +68,8 @@ fun Modifier.basicVerticalMarquee(
                 initialDelayMillis = initialDelayMillis,
                 spacing = spacing,
                 velocity = velocity,
+                showSecondCopy = showSecondCopy,
+                state = state,
             )
 
 private data class VerticalMarqueeModifierElement(
@@ -74,6 +79,8 @@ private data class VerticalMarqueeModifierElement(
     private val initialDelayMillis: Int,
     private val spacing: VerticalMarqueeSpacing,
     private val velocity: Dp,
+    private val showSecondCopy: Boolean,
+    private val state: VerticalMarqueeState?,
 ) : ModifierNodeElement<VerticalMarqueeModifierNode>() {
     override fun create(): VerticalMarqueeModifierNode =
         VerticalMarqueeModifierNode(
@@ -83,6 +90,8 @@ private data class VerticalMarqueeModifierElement(
             initialDelayMillis = initialDelayMillis,
             spacing = spacing,
             velocity = velocity,
+            showSecondCopy = showSecondCopy,
+            state = state,
         )
 
     override fun update(node: VerticalMarqueeModifierNode) {
@@ -93,6 +102,7 @@ private data class VerticalMarqueeModifierElement(
             initialDelayMillis = initialDelayMillis,
             spacing = spacing,
             velocity = velocity,
+            state = state,
         )
     }
 
@@ -108,12 +118,14 @@ private data class VerticalMarqueeModifierElement(
 }
 
 private class VerticalMarqueeModifierNode(
-    private var iterations: Int,
+    iterations: Int,
     animationMode: MarqueeAnimationMode,
-    private var delayMillis: Int,
-    private var initialDelayMillis: Int,
+    delayMillis: Int,
+    initialDelayMillis: Int,
     spacing: VerticalMarqueeSpacing,
-    private var velocity: Dp,
+    velocity: Dp,
+    val showSecondCopy: Boolean,
+    state: VerticalMarqueeState?,
 ) : Modifier.Node(), LayoutModifierNode, DrawModifierNode, FocusEventModifierNode {
 
     private var contentHeight by mutableIntStateOf(0)
@@ -123,6 +135,11 @@ private class VerticalMarqueeModifierNode(
     private var marqueeLayer: GraphicsLayer? = null
     var spacing: VerticalMarqueeSpacing by mutableStateOf(spacing)
     var animationMode: MarqueeAnimationMode by mutableStateOf(animationMode)
+    var iterations: Int by mutableIntStateOf(iterations)
+    var delayMillis: Int by mutableIntStateOf(delayMillis)
+    var initialDelayMillis: Int by mutableIntStateOf(initialDelayMillis)
+    var velocity: Dp by mutableStateOf(velocity)
+    var state: VerticalMarqueeState? by mutableStateOf(state)
 
     /**
      * The animation of the marquee content - this is always in the range
@@ -163,22 +180,15 @@ private class VerticalMarqueeModifierNode(
         initialDelayMillis: Int,
         spacing: VerticalMarqueeSpacing,
         velocity: Dp,
+        state: VerticalMarqueeState?,
     ) {
         this.spacing = spacing
         this.animationMode = animationMode
-
-        if (
-            this.iterations != iterations ||
-            this.delayMillis != delayMillis ||
-            this.initialDelayMillis != initialDelayMillis ||
-            this.velocity != velocity
-        ) {
-            this.iterations = iterations
-            this.delayMillis = delayMillis
-            this.initialDelayMillis = initialDelayMillis
-            this.velocity = velocity
-            restartAnimation()
-        }
+        this.iterations = iterations
+        this.delayMillis = delayMillis
+        this.initialDelayMillis = initialDelayMillis
+        this.velocity = velocity
+        this.state = state
     }
 
     override fun onFocusEvent(focusState: FocusState) {
@@ -248,14 +258,14 @@ private class VerticalMarqueeModifierNode(
                     if (firstCopyVisible) {
                         drawLayer(layer)
                     }
-                    if (secondCopyVisible) {
+                    if (showSecondCopy && secondCopyVisible) {
                         translate(top = secondCopyOffset) { drawLayer(layer) }
                     }
                 } else {
                     if (firstCopyVisible) {
                         this@draw.drawContent()
                     }
-                    if (secondCopyVisible) {
+                    if (showSecondCopy && secondCopyVisible) {
                         translate(top = secondCopyOffset) { this@draw.drawContent() }
                     }
                 }
@@ -278,71 +288,84 @@ private class VerticalMarqueeModifierNode(
     private suspend fun runAnimation() {
         if (iterations <= 0) return
 
+        var currentIteration = 0
+        var delayWait = true
+        var delayMillisRemaining = initialDelayMillis.toFloat()
+
         withContext(FixedMotionDurationScale) {
             snapshotFlow {
-                if (contentHeight <= containerHeight) return@snapshotFlow null
-                if (animationMode == WhileFocused && !hasFocus) return@snapshotFlow null
-                (contentHeight + spacingPx).toFloat()
-            }
-                .collectLatest { contentWithSpacingHeight ->
-                    if (contentWithSpacingHeight == null) return@collectLatest
+                val ch = contentHeight
+                val cntH = containerHeight
+                val contentWithSpacingHeight = if (ch <= cntH) null else (ch + spacingPx).toFloat()
 
-                    val spec =
-                        createMarqueeAnimationSpec(
-                            iterations,
-                            contentWithSpacingHeight,
-                            initialDelayMillis,
-                            delayMillis,
-                            velocity,
-                            requireDensity(),
-                        )
-
-                    offset.snapTo(0f)
-                    try {
-                        offset.animateTo(contentWithSpacingHeight, spec)
-                    } finally {
-                        offset.snapTo(0f)
-                    }
+                val isPlaying = when {
+                    state != null -> state!!.isPlaying
+                    animationMode == WhileFocused -> hasFocus
+                    else -> true
                 }
+
+                val pxPerSec = with(requireDensity()) { velocity.toPx().absoluteValue }
+
+                AnimationConfig(
+                    contentWithSpacingHeight = contentWithSpacingHeight,
+                    isPlaying = isPlaying,
+                    pxPerSec = pxPerSec,
+                    iterations = iterations,
+                    initialDelayMillis = initialDelayMillis,
+                    delayMillis = delayMillis,
+                )
+            }.collectLatest { config ->
+                if (config.contentWithSpacingHeight == null) return@collectLatest
+                state?.maxOffset = config.contentWithSpacingHeight
+
+                if (!config.isPlaying || config.iterations <= 0) return@collectLatest
+
+                var lastTimeNanos = withFrameNanos { it }
+
+                while (config.iterations == Int.MAX_VALUE || currentIteration < config.iterations) {
+                    val timeNanos = withFrameNanos { it }
+                    val deltaMs = (timeNanos - lastTimeNanos) / 1_000_000f
+                    lastTimeNanos = timeNanos
+
+                    if (delayWait) {
+                        delayMillisRemaining -= deltaMs
+                        if (delayMillisRemaining <= 0f) {
+                            delayWait = false
+                        }
+                        continue
+                    }
+
+                    val deltaPx = config.pxPerSec * (deltaMs / 1000f)
+
+                    var newOffset = offset.value + deltaPx
+                    if (newOffset >= config.contentWithSpacingHeight) {
+                        newOffset = 0f
+                        currentIteration++
+                        if (config.iterations != Int.MAX_VALUE && currentIteration >= config.iterations) {
+                            offset.snapTo(newOffset)
+                            state?.offset = newOffset
+                            break
+                        }
+                        delayWait = true
+                        delayMillisRemaining = config.delayMillis.toFloat()
+                    }
+
+                    offset.snapTo(newOffset)
+                    state?.offset = newOffset
+                }
+            }
         }
     }
 }
 
-private fun createMarqueeAnimationSpec(
-    iterations: Int,
-    targetValue: Float,
-    initialDelayMillis: Int,
-    delayMillis: Int,
-    velocity: Dp,
-    density: Density,
-): AnimationSpec<Float> {
-    val pxPerSec = with(density) { velocity.toPx() }
-    val singleSpec =
-        velocityBasedTween(
-            velocity = pxPerSec.absoluteValue,
-            targetValue = targetValue,
-            delayMillis = delayMillis,
-        )
-    val startOffset = StartOffset(-delayMillis + initialDelayMillis)
-    return if (iterations == Int.MAX_VALUE) {
-        infiniteRepeatable(singleSpec, initialStartOffset = startOffset)
-    } else {
-        repeatable(iterations, singleSpec, initialStartOffset = startOffset)
-    }
-}
-
-private fun velocityBasedTween(
-    velocity: Float,
-    targetValue: Float,
-    delayMillis: Int,
-): TweenSpec<Float> {
-    val pxPerMilli = velocity / 1000f
-    return tween(
-        durationMillis = ceil(targetValue / pxPerMilli).toInt(),
-        easing = LinearEasing,
-        delayMillis = delayMillis,
-    )
-}
+private data class AnimationConfig(
+    val contentWithSpacingHeight: Float?,
+    val isPlaying: Boolean,
+    val pxPerSec: Float,
+    val iterations: Int,
+    val initialDelayMillis: Int,
+    val delayMillis: Int,
+)
 
 /** A [VerticalMarqueeSpacing] with a fixed size. */
 fun VerticalMarqueeSpacing(spacing: Dp): VerticalMarqueeSpacing =
