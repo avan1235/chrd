@@ -142,6 +142,26 @@ private fun AutoScrollableSongView(
                 }
 
                 AnimatedVisibility(
+                    visible = !isFullScreen && marqueeState.offset > 0 && marqueeState.maxOffset > 0f,
+                    enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }),
+                    exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 }),
+                ) {
+                    SmallFloatingActionButton(
+                        onClick = {
+                            onAutoScrollingChanged(false)
+                            marqueeState.restart()
+                        },
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.RestartAlt,
+                            contentDescription = "Reset Scroll",
+                        )
+                    }
+                }
+
+
+                AnimatedVisibility(
                     visible = marqueeState.maxOffset > 0f,
                     enter = fadeIn(),
                     exit = fadeOut(),

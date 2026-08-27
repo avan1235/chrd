@@ -26,11 +26,11 @@ import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
 object VerticalMarqueeDefaults {
-    const val Iterations: Int = 3
-    const val RepeatDelayMillis: Int = 1_200
+    val Iterations: Int = 3
+    val RepeatDelayMillis: Int = 1_200
     val Spacing: VerticalMarqueeSpacing = VerticalMarqueeSpacing.fractionOfContainer(1f / 3f)
     val Velocity: Dp = 30.dp
-    const val ShowSecondCopy: Boolean = true
+    val ShowSecondCopy: Boolean = true
 }
 
 @Stable
@@ -42,6 +42,13 @@ class VerticalMarqueeState(
     var maxOffset: Float by mutableFloatStateOf(0f)
         internal set
     var isPlaying: Boolean by mutableStateOf(initialIsPlaying)
+
+    internal var restartTrigger by mutableIntStateOf(0)
+        private set
+
+    fun restart() {
+        restartTrigger++
+    }
 }
 
 @Composable
@@ -55,7 +62,7 @@ fun Modifier.basicVerticalMarquee(
     animationMode: MarqueeAnimationMode = Immediately,
     repeatDelayMillis: Int = VerticalMarqueeDefaults.RepeatDelayMillis,
     initialDelayMillis: Int = if (animationMode == Immediately) repeatDelayMillis else 0,
-    spacing: VerticalMarqueeSpacing = VerticalMarqueeSpacing.fractionOfContainer(1f),
+    spacing: VerticalMarqueeSpacing = VerticalMarqueeDefaults.Spacing,
     velocity: Dp = VerticalMarqueeDefaults.Velocity,
     showSecondCopy: Boolean = VerticalMarqueeDefaults.ShowSecondCopy,
     state: VerticalMarqueeState? = null,
@@ -288,6 +295,7 @@ private class VerticalMarqueeModifierNode(
     private suspend fun runAnimation() {
         if (iterations <= 0) return
 
+        var currentRestartTrigger = state?.restartTrigger ?: 0
         var currentIteration = 0
         var delayWait = true
         var delayMillisRemaining = initialDelayMillis.toFloat()
@@ -304,12 +312,14 @@ private class VerticalMarqueeModifierNode(
                     else -> true
                 }
 
+                val trigger = state?.restartTrigger ?: 0
                 val pxPerSec = with(requireDensity()) { velocity.toPx().absoluteValue }
 
                 AnimationConfig(
                     contentWithSpacingHeight = contentWithSpacingHeight,
                     isPlaying = isPlaying,
                     pxPerSec = pxPerSec,
+                    trigger = trigger,
                     iterations = iterations,
                     initialDelayMillis = initialDelayMillis,
                     delayMillis = delayMillis,
@@ -317,6 +327,15 @@ private class VerticalMarqueeModifierNode(
             }.collectLatest { config ->
                 if (config.contentWithSpacingHeight == null) return@collectLatest
                 state?.maxOffset = config.contentWithSpacingHeight
+
+                if (config.trigger != currentRestartTrigger) {
+                    currentRestartTrigger = config.trigger
+                    offset.animateTo(0f)
+                    state?.offset = 0f
+                    currentIteration = 0
+                    delayWait = true
+                    delayMillisRemaining = config.initialDelayMillis.toFloat()
+                }
 
                 if (!config.isPlaying || config.iterations <= 0) return@collectLatest
 
@@ -362,6 +381,7 @@ private data class AnimationConfig(
     val contentWithSpacingHeight: Float?,
     val isPlaying: Boolean,
     val pxPerSec: Float,
+    val trigger: Int,
     val iterations: Int,
     val initialDelayMillis: Int,
     val delayMillis: Int,
