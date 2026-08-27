@@ -1,6 +1,8 @@
 package `in`.procyk.chrd.screen
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.AnimationConstants.DefaultDurationMillis
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -111,8 +113,18 @@ private fun AutoScrollableSongView(
             ) {
                 AnimatedVisibility(
                     visible = isFullScreen && marqueeState.maxOffset > 0f,
-                    enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }),
-                    exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 }),
+                    enter =
+                        if (marqueeState.offset <= 0) fadeIn() + slideInVertically(initialOffsetY = { it / 2 })
+                        else fadeIn(tween(DefaultDurationMillis, DefaultDurationMillis)) + slideInVertically(
+                            initialOffsetY = { it / 2 },
+                            animationSpec = tween(DefaultDurationMillis, DefaultDurationMillis),
+                        ),
+                    exit =
+                        if (marqueeState.offset <= 0) fadeOut() + slideOutVertically(targetOffsetY = { it / 2 })
+                        else fadeOut(tween(DefaultDurationMillis)) + slideOutVertically(
+                            targetOffsetY = { it / 2 },
+                            animationSpec = tween(DefaultDurationMillis),
+                        ),
                 ) {
                     Column(
                         horizontalAlignment = Alignment.End,
@@ -142,9 +154,15 @@ private fun AutoScrollableSongView(
                 }
 
                 AnimatedVisibility(
-                    visible = !isFullScreen && marqueeState.offset > 0 && marqueeState.maxOffset > 0f,
-                    enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }),
-                    exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 }),
+                    visible = !isFullScreen && marqueeState.offset > 0 && marqueeState.maxOffset > 0,
+                    enter = fadeIn(tween(DefaultDurationMillis, DefaultDurationMillis)) + slideInVertically(
+                        initialOffsetY = { it / 2 },
+                        animationSpec = tween(DefaultDurationMillis, DefaultDurationMillis),
+                    ),
+                    exit = fadeOut(tween(DefaultDurationMillis)) + slideOutVertically(
+                        targetOffsetY = { it / 2 },
+                        animationSpec = tween(DefaultDurationMillis),
+                    ),
                 ) {
                     SmallFloatingActionButton(
                         onClick = {
