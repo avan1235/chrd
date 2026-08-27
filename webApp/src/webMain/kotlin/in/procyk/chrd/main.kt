@@ -9,6 +9,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.LocalFontFamilyResolver
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.ComposeViewport
 import chrd.shared.generated.resources.JetBrainsMono_Bold
 import chrd.shared.generated.resources.JetBrainsMono_BoldItalic
@@ -32,11 +33,21 @@ import org.jetbrains.compose.resources.preloadFont
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
+    val topPadding = if (isMobileClient()) 40.dp else 0.dp
     ComposeViewport {
         WithFontResourcesLoaded {
-            ChrdApp()
+            ChrdApp(topPadding = topPadding)
         }
     }
+}
+
+private fun isMobileClient(): Boolean {
+    val userAgent = js("navigator.userAgent") as? String ?: ""
+    val maxTouchPoints = (js("navigator.maxTouchPoints") as? Number)?.toInt() ?: 0
+    val hasCoarsePointer = js("window.matchMedia('(pointer: coarse)').matches") as? Boolean ?: false
+
+    val mobileUserAgent = userAgent.contains(Regex("Android|iPhone|iPad|iPod|Mobile", RegexOption.IGNORE_CASE))
+    return mobileUserAgent || (hasCoarsePointer && maxTouchPoints > 0)
 }
 
 @OptIn(ExperimentalResourceApi::class)

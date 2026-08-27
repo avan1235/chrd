@@ -4,8 +4,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -13,7 +16,14 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            ChrdApp()
+            val view = LocalView.current
+            val density = LocalDensity.current
+            val topPadding = remember(view, density) {
+                val insets = ViewCompat.getRootWindowInsets(view)
+                val topInsetPx = insets?.getInsets(WindowInsetsCompat.Type.statusBars())?.top ?: 0
+                with(density) { topInsetPx.toDp() }
+            }
+            ChrdApp(topPadding = topPadding)
         }
     }
 }

@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -47,7 +48,7 @@ private enum class TabEntry(
 }
 
 @Composable
-fun ChrdApp() {
+fun ChrdApp(topPadding: Dp = 0.dp) {
     val settingsRepository = rememberAppSettingsRepository()
     val songRepository = rememberSongRepository()
     val savedSettings by settingsRepository.settings.collectAsState(initial = AppSettings())
@@ -110,7 +111,7 @@ fun ChrdApp() {
             val backdrop = rememberLayerBackdrop()
             Box(
                 modifier = Modifier
-                    .windowInsetsPadding(if (!isAutoScrolling) WindowInsets(top = 40.dp) else WindowInsets())
+                    .windowInsetsPadding(if (!isAutoScrolling) WindowInsets(top = topPadding) else WindowInsets())
                     .fillMaxSize(),
             ) {
                 NavDisplay(
