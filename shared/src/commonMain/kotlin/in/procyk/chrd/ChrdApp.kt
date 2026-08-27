@@ -51,7 +51,8 @@ private enum class TabEntry(
 fun ChrdApp(topPadding: Dp = 0.dp) {
     val settingsRepository = rememberAppSettingsRepository()
     val songRepository = rememberSongRepository()
-    val savedSettings by settingsRepository.settings.collectAsState(initial = AppSettings())
+    val savedSettingsState by settingsRepository.settings.collectAsState(initial = null)
+    val savedSettings = savedSettingsState ?: return
     ChrdTheme(themeMode = savedSettings.themeMode) {
         val backStack = rememberNavBackStack(Screen.SavedStateConfiguration, Screen.Search)
 
