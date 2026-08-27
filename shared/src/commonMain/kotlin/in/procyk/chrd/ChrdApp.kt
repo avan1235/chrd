@@ -56,16 +56,16 @@ fun ChrdApp(topPadding: Dp = 0.dp) {
     ChrdTheme(themeMode = savedSettings.themeMode) {
         val backStack = rememberNavBackStack(Screen.SavedStateConfiguration, Screen.Search)
 
-        var isAutoScrolling by remember { mutableStateOf(true) }
+        var isFullScreen by remember { mutableStateOf(true) }
         LaunchedEffect(backStack.last()) {
-            isAutoScrolling = false
+            isFullScreen = false
         }
 
         Scaffold(
             bottomBar = {
                 if (!savedSettings.useLiquidNavigation) {
                     AnimatedVisibility(
-                        visible = !isAutoScrolling,
+                        visible = !isFullScreen,
                         enter = slideInVertically(initialOffsetY = { it }) + expandVertically(expandFrom = Alignment.Bottom) + fadeIn(),
                         exit = slideOutVertically(targetOffsetY = { it }) + shrinkVertically(shrinkTowards = Alignment.Bottom) + fadeOut(),
                     ) {
@@ -112,7 +112,7 @@ fun ChrdApp(topPadding: Dp = 0.dp) {
             val backdrop = rememberLayerBackdrop()
             Box(
                 modifier = Modifier
-                    .windowInsetsPadding(if (!isAutoScrolling) WindowInsets(top = topPadding) else WindowInsets())
+                    .windowInsetsPadding(if (!isFullScreen) WindowInsets(top = topPadding) else WindowInsets())
                     .fillMaxSize(),
             ) {
                 NavDisplay(
@@ -138,8 +138,8 @@ fun ChrdApp(topPadding: Dp = 0.dp) {
                                 viewModel = viewModel(key = destination.listing.source.toString()) {
                                     SongViewModel(destination.listing, songRepository, settingsRepository)
                                 },
-                                isAutoScrolling = isAutoScrolling,
-                                onAutoScrollingChanged = { isAutoScrolling = it },
+                                isFullScreen = isFullScreen,
+                                onAutoScrollingChanged = { isFullScreen = it },
                             )
                         }
 
@@ -162,7 +162,7 @@ fun ChrdApp(topPadding: Dp = 0.dp) {
 
                 if (savedSettings.useLiquidNavigation) {
                     AnimatedVisibility(
-                        visible = !isAutoScrolling,
+                        visible = !isFullScreen,
                         enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
                         exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
                         modifier = Modifier.align(Alignment.BottomCenter),

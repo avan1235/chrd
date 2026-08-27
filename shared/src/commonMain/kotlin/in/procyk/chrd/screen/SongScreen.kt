@@ -32,7 +32,7 @@ import kotlin.coroutines.cancellation.CancellationException
 @Composable
 internal fun SongScreen(
     viewModel: SongViewModel,
-    isAutoScrolling: Boolean,
+    isFullScreen: Boolean,
     onAutoScrollingChanged: (Boolean) -> Unit,
 ) {
     val song by viewModel.song.collectAsState()
@@ -48,7 +48,7 @@ internal fun SongScreen(
             else -> AutoScrollableSongView(
                 song = song,
                 viewModel = viewModel,
-                isAutoScrolling = isAutoScrolling,
+                isFullScreen = isFullScreen,
                 onAutoScrollingChanged = onAutoScrollingChanged,
             )
         }
@@ -60,7 +60,7 @@ private fun AutoScrollableSongView(
     song: Song,
     viewModel: SongViewModel,
     modifier: Modifier = Modifier,
-    isAutoScrolling: Boolean,
+    isFullScreen: Boolean,
     onAutoScrollingChanged: (Boolean) -> Unit,
 ) {
     KeepScreenOn()
@@ -78,8 +78,8 @@ private fun AutoScrollableSongView(
         }
     }
 
-    LaunchedEffect(isAutoScrolling, speedMultiplier, scrollState.maxValue) {
-        if (!isAutoScrolling || scrollState.maxValue <= 0 || songLines == 0) return@LaunchedEffect
+    LaunchedEffect(isFullScreen, speedMultiplier, scrollState.maxValue) {
+        if (!isFullScreen || scrollState.maxValue <= 0 || songLines == 0) return@LaunchedEffect
 
         val remainingPixels = scrollState.maxValue - scrollState.value
 
@@ -137,14 +137,14 @@ private fun AutoScrollableSongView(
                 },
             )
         },
-        topBarVisible = !isAutoScrolling,
+        topBarVisible = !isFullScreen,
         floatingActionButton = {
             Column(
                 horizontalAlignment = Alignment.End,
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 AnimatedVisibility(
-                    visible = isAutoScrolling && scrollState.maxValue > 0,
+                    visible = isFullScreen && scrollState.maxValue > 0,
                     enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }),
                     exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 }),
                 ) {
@@ -196,18 +196,18 @@ private fun AutoScrollableSongView(
                         }
 
                         else -> FloatingActionButton(
-                            onClick = { onAutoScrollingChanged(!isAutoScrolling) },
+                            onClick = { onAutoScrollingChanged(!isFullScreen) },
                             containerColor = MaterialTheme.colorScheme.primary,
                         ) {
                             Icon(
-                                imageVector = if (isAutoScrolling) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                contentDescription = if (isAutoScrolling) "Pause Auto-scroll" else "Start Auto-scroll",
+                                imageVector = if (isFullScreen) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                contentDescription = if (isFullScreen) "Pause Auto-scroll" else "Start Auto-scroll",
                             )
                         }
                     }
                 }
                 val useLiquidNavigation by viewModel.useLiquidNavigation.collectAsState()
-                LiquidBottomTabsSpacer(useLiquidNavigation && !isAutoScrolling)
+                LiquidBottomTabsSpacer(useLiquidNavigation && !isFullScreen)
             }
 
         },
