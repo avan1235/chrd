@@ -13,6 +13,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.keepScreenOn
 import androidx.compose.ui.text.font.FontWeight
@@ -24,6 +26,8 @@ import `in`.procyk.chrd.component.Screen
 import `in`.procyk.chrd.component.liquid.LiquidBottomTabsSpacer
 import `in`.procyk.chrd.model.*
 import `in`.procyk.chrd.model.LinePart.*
+import `in`.procyk.chrd.ui.VerticalMarqueeSpacing
+import `in`.procyk.chrd.ui.basicVerticalMarquee
 import `in`.procyk.chrd.viewmodel.SongViewModel
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
@@ -69,40 +73,11 @@ private fun AutoScrollableSongView(
 
     var speedMultiplier by remember { mutableFloatStateOf(1f) }
     var clickedChord by remember { mutableStateOf<Chord?>(null) }
+    val focusRequester = remember { FocusRequester() }
 
     val isAtBottom by remember {
         derivedStateOf {
             scrollState.maxValue > 0 && scrollState.value >= scrollState.maxValue
-        }
-    }
-
-    LaunchedEffect(isFullScreen, speedMultiplier, scrollState.maxValue) {
-        if (!isFullScreen || scrollState.maxValue <= 0 || songLines == 0) return@LaunchedEffect
-
-        val remainingPixels = scrollState.maxValue - scrollState.value
-
-        if (remainingPixels > 0) {
-            val totalTimeMs = (songLines * 5000f) / speedMultiplier
-
-            val fractionRemaining = remainingPixels.toFloat() / scrollState.maxValue.toFloat()
-            val durationMs = (totalTimeMs * fractionRemaining).toInt()
-
-            try {
-                scrollState.animateScrollTo(
-                    value = scrollState.maxValue,
-                    animationSpec = tween(
-                        durationMillis = durationMs,
-                        easing = LinearEasing,
-                    ),
-                )
-                onAutoScrollingChanged(false)
-            } catch (e: CancellationException) {
-                if (!scrollState.isScrollInProgress) throw e
-
-                onAutoScrollingChanged(false)
-            }
-        } else {
-            onAutoScrollingChanged(false)
         }
     }
 
@@ -195,7 +170,12 @@ private fun AutoScrollableSongView(
                         }
 
                         else -> FloatingActionButton(
-                            onClick = { onAutoScrollingChanged(!isFullScreen) },
+                            onClick = {
+                                val updated = !isFullScreen
+                                onAutoScrollingChanged(updated)
+                                if (updated) focusRequester.requestFocus()
+                                else focusRequester.freeFocus()
+                            },
                             containerColor = MaterialTheme.colorScheme.primary,
                         ) {
                             Icon(
@@ -213,10 +193,19 @@ private fun AutoScrollableSongView(
     ) { paddingValues ->
         Column(
             modifier = modifier
+                .basicVerticalMarquee(
+                    iterations = 1,
+                    animationMode = MarqueeAnimationMode.WhileFocused,
+                    repeatDelayMillis = 0,
+                    initialDelayMillis = 0,
+                    spacing = VerticalMarqueeSpacing(0.dp),
+                    velocity = 40.dp * speedMultiplier
+                )
                 .fillMaxSize()
                 .padding(paddingValues)
-                .verticalScroll(scrollState)
-                .padding(16.dp),
+                .padding(16.dp)
+                .focusRequester(focusRequester)
+                .focusable(),
         ) {
             SongChordsView(song)
 
