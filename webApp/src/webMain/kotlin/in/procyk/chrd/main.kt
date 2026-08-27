@@ -1,33 +1,14 @@
+@file:OptIn(ExperimentalWasmJsInterop::class)
+
 package `in`.procyk.chrd
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.LocalFontFamilyResolver
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.ComposeViewport
-import chrd.shared.generated.resources.JetBrainsMono_Bold
-import chrd.shared.generated.resources.JetBrainsMono_BoldItalic
-import chrd.shared.generated.resources.JetBrainsMono_ExtraBold
-import chrd.shared.generated.resources.JetBrainsMono_ExtraBoldItalic
-import chrd.shared.generated.resources.JetBrainsMono_ExtraLight
-import chrd.shared.generated.resources.JetBrainsMono_ExtraLightItalic
-import chrd.shared.generated.resources.JetBrainsMono_Italic
-import chrd.shared.generated.resources.JetBrainsMono_Light
-import chrd.shared.generated.resources.JetBrainsMono_LightItalic
-import chrd.shared.generated.resources.JetBrainsMono_Medium
-import chrd.shared.generated.resources.JetBrainsMono_MediumItalic
-import chrd.shared.generated.resources.JetBrainsMono_Regular
-import chrd.shared.generated.resources.JetBrainsMono_SemiBold
-import chrd.shared.generated.resources.JetBrainsMono_SemiBoldItalic
-import chrd.shared.generated.resources.JetBrainsMono_Thin
-import chrd.shared.generated.resources.JetBrainsMono_ThinItalic
-import chrd.shared.generated.resources.Res
+import chrd.shared.generated.resources.*
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.preloadFont
 
@@ -41,10 +22,14 @@ fun main() {
     }
 }
 
+private fun navigatorUserAgent(): String = js("navigator.userAgent")
+private fun navigatorMaxTouchPoints(): Int = js("navigator.maxTouchPoints")
+private fun windowHasCoarsePointer(): Boolean = js("window.matchMedia('(pointer: coarse)').matches")
+
 private fun isMobileClient(): Boolean {
-    val userAgent = js("navigator.userAgent") as? String ?: ""
-    val maxTouchPoints = (js("navigator.maxTouchPoints") as? Number)?.toInt() ?: 0
-    val hasCoarsePointer = js("window.matchMedia('(pointer: coarse)').matches") as? Boolean ?: false
+    val userAgent = navigatorUserAgent()
+    val maxTouchPoints = navigatorMaxTouchPoints()
+    val hasCoarsePointer = windowHasCoarsePointer()
 
     val mobileUserAgent = userAgent.contains(Regex("Android|iPhone|iPad|iPod|Mobile", RegexOption.IGNORE_CASE))
     return mobileUserAgent || (hasCoarsePointer && maxTouchPoints > 0)
@@ -53,7 +38,7 @@ private fun isMobileClient(): Boolean {
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 internal inline fun WithFontResourcesLoaded(
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val jetBrainsMonoBold by preloadFont(Res.font.JetBrainsMono_Bold)
     val jetBrainsMonoBoldItalic by preloadFont(Res.font.JetBrainsMono_BoldItalic)
