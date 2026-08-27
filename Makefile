@@ -19,6 +19,6 @@ wasm: .executable
 	./gradlew clean
 
 tag:
-	git describe --tags --abbrev=0 --match "v*.*.*" | awk -F. '{print $$1"."$$2"."$$3+1}' | xargs -I {} sh -c 'git tag -a "$$1" -m "$$1" && git push origin "$$1"' -- {}
+	git describe --tags --abbrev=0 --match "v*.*.*" | awk -F. '{print $$1"."$$2"."$$3+1}' | xargs -I {} sh -c 'git tag -a "$$1" -m "$$1" && git push origin master && git push origin "$$1"' -- {}
 
 clean: .clean-gradle .clean-docker
