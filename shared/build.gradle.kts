@@ -55,7 +55,7 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.sqlite.bundled)
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+            implementation(libs.kotlinx.coroutines.android)
         }
         commonMain.dependencies {
             implementation(libs.kotlinx.serialization.json)
@@ -74,16 +74,16 @@ kotlin {
             implementation(libs.backdrop)
             implementation(libs.shapes)
 
-            implementation("com.fleeksoft.ksoup:ksoup:0.2.6")
-            implementation("com.fleeksoft.ksoup:ksoup-network:0.2.6")
+            implementation(libs.ksoup)
+            implementation(libs.ksoup.network)
 
-            implementation("org.jetbrains.compose.material:material-icons-extended:1.7.3")
+            implementation(compose.materialIconsExtended)
 
             api(libs.room.runtime)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
+            implementation(libs.kotlinx.coroutines.test)
         }
         jvmMain.dependencies {
             implementation(libs.sqlite.bundled)
