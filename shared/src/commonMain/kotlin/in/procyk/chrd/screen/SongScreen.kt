@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.keepScreenOn
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -23,7 +24,6 @@ import `in`.procyk.chrd.component.Screen
 import `in`.procyk.chrd.component.liquid.LiquidBottomTabsSpacer
 import `in`.procyk.chrd.model.*
 import `in`.procyk.chrd.model.LinePart.*
-import `in`.procyk.chrd.ui.KeepScreenOn
 import `in`.procyk.chrd.viewmodel.SongViewModel
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
@@ -63,8 +63,6 @@ private fun AutoScrollableSongView(
     isFullScreen: Boolean,
     onAutoScrollingChanged: (Boolean) -> Unit,
 ) {
-    KeepScreenOn()
-
     val songLines = remember(song) { song.sections.sumOf { it.lines.size } }
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
@@ -109,6 +107,7 @@ private fun AutoScrollableSongView(
     }
 
     Screen(
+        modifier = modifier.keepScreenOn(),
         topBar = {
             TopAppBar(
                 title = {
