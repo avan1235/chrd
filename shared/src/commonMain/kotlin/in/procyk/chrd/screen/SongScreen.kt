@@ -154,7 +154,7 @@ private fun AutoScrollableSongView(
                         containerColor = MaterialTheme.colorScheme.secondaryContainer,
                     ) {
                         Icon(
-                            imageVector = Icons.Default.RestartAlt,
+                            imageVector = Icons.Default.Replay,
                             contentDescription = "Reset Scroll",
                         )
                     }
