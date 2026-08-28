@@ -18,6 +18,7 @@ private fun buildAppDatabase(): AppDatabase {
         factory = { AppDatabaseConstructor.initialize() },
     )
         .addMigrations(*MIGRATIONS)
+        .fallbackToDestructiveMigration()
         .setDriver(WebWorkerSQLiteDriver(createSQLiteWorker()))
         .setQueryCoroutineContext(Dispatchers.Default)
         .build()
