@@ -68,8 +68,13 @@ private fun AutoScrollableSongView(
 ) {
     val marqueeState = rememberVerticalMarqueeState(initialIsPlaying = isFullScreen)
 
-    LaunchedEffect(isFullScreen) {
+    LaunchedEffect(isFullScreen, marqueeState) {
         marqueeState.isPlaying = isFullScreen
+        snapshotFlow {
+            marqueeState.isPlaying
+        }.collect {
+            onAutoScrollingChanged(it)
+        }
     }
 
     var speedMultiplier by remember { mutableFloatStateOf(1f) }

@@ -9,11 +9,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.MotionDurationScale
 import androidx.compose.ui.focus.FocusEventModifierNode
 import androidx.compose.ui.focus.FocusState
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
-import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.translate
-import androidx.compose.ui.graphics.layer.GraphicsLayer
-import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.layout.*
 import androidx.compose.ui.node.*
 import androidx.compose.ui.platform.InspectorInfo
@@ -67,7 +65,7 @@ fun Modifier.basicVerticalMarquee(
     showSecondCopy: Boolean = VerticalMarqueeDefaults.ShowSecondCopy,
     state: VerticalMarqueeState? = null,
 ): Modifier =
-    this then
+    this.clipToBounds() then
             VerticalMarqueeModifierElement(
                 iterations = iterations,
                 animationMode = animationMode,
@@ -139,7 +137,6 @@ private class VerticalMarqueeModifierNode(
     private var containerHeight by mutableIntStateOf(0)
     private var hasFocus by mutableStateOf(false)
     private var animationJob: Job? = null
-    private var marqueeLayer: GraphicsLayer? = null
     var spacing: VerticalMarqueeSpacing by mutableStateOf(spacing)
     var animationMode: MarqueeAnimationMode by mutableStateOf(animationMode)
     var iterations: Int by mutableIntStateOf(iterations)
@@ -159,25 +156,12 @@ private class VerticalMarqueeModifierNode(
     }
 
     override fun onAttach() {
-        val layer = marqueeLayer
-        val graphicsContext = requireGraphicsContext()
-        if (layer != null) {
-            graphicsContext.releaseGraphicsLayer(layer)
-        }
-
-        marqueeLayer = graphicsContext.createGraphicsLayer()
         restartAnimation()
     }
 
     override fun onDetach() {
         animationJob?.cancel()
         animationJob = null
-
-        val layer = marqueeLayer
-        if (layer != null) {
-            requireGraphicsContext().releaseGraphicsLayer(layer)
-            marqueeLayer = null
-        }
     }
 
     fun update(
@@ -202,6 +186,16 @@ private class VerticalMarqueeModifierNode(
         hasFocus = focusState.hasFocus
     }
 
+    /**
+     * The offset of the visible window over the content, in pixels. It is applied both to the
+     * layout (so that pointer events follow the scrolled content) and to the drawing of the copies.
+     */
+    private val clipWindowOffset: Float
+        get() = when {
+            velocity > 0.dp -> offset.value
+            else -> -offset.value + contentHeight + spacingPx
+        }
+
     override fun MeasureScope.measure(
         measurable: Measurable,
         constraints: Constraints,
@@ -213,7 +207,7 @@ private class VerticalMarqueeModifierNode(
         val containerWidth = constraints.constrainWidth(placeable.width)
 
         return layout(containerWidth, containerHeight) {
-            placeable.placeWithLayer(0, 0)
+            placeable.place(0, -clipWindowOffset.roundToInt())
         }
     }
 
@@ -241,42 +235,21 @@ private class VerticalMarqueeModifierNode(
     ): Int = measurable.maxIntrinsicHeight(width)
 
     override fun ContentDrawScope.draw() {
-        val clipWindowOffset =
-            if (velocity > 0.dp) {
-                offset.value
-            } else {
-                -offset.value + contentHeight + spacingPx
-            }
+        val clipWindowOffset = clipWindowOffset
 
         val firstCopyVisible = clipWindowOffset < contentHeight
         val secondCopyVisible = clipWindowOffset + containerHeight > contentHeight + spacingPx
         val secondCopyOffset = (contentHeight + spacingPx).toFloat()
 
-        val drawWidth = size.width
-        marqueeLayer?.let { layer ->
-            layer.record(size = IntSize(drawWidth.roundToInt(), contentHeight)) {
-                this@draw.drawContent()
-            }
+        // The content is placed at its scrolled position by the layout itself, so that pointer
+        // events are translated together with it - therefore the first copy is drawn as is and
+        // only the repeated copy needs an additional translation. Clipping to the container is
+        // done by [clipToBounds] in the modifier chain.
+        if (firstCopyVisible) {
+            drawContent()
         }
-        clipRect(bottom = containerHeight.toFloat()) {
-            translate(top = -clipWindowOffset) {
-                val layer = marqueeLayer
-                if (layer != null) {
-                    if (firstCopyVisible) {
-                        drawLayer(layer)
-                    }
-                    if (showSecondCopy && secondCopyVisible) {
-                        translate(top = secondCopyOffset) { drawLayer(layer) }
-                    }
-                } else {
-                    if (firstCopyVisible) {
-                        this@draw.drawContent()
-                    }
-                    if (showSecondCopy && secondCopyVisible) {
-                        translate(top = secondCopyOffset) { this@draw.drawContent() }
-                    }
-                }
-            }
+        if (showSecondCopy && secondCopyVisible) {
+            translate(top = secondCopyOffset) { this@draw.drawContent() }
         }
     }
 
@@ -372,6 +345,11 @@ private class VerticalMarqueeModifierNode(
                     offset.snapTo(newOffset)
                     state?.offset = newOffset
                 }
+                state?.isPlaying = false
+                currentRestartTrigger = state?.restartTrigger ?: 0
+                currentIteration = 0
+                delayWait = true
+                delayMillisRemaining = initialDelayMillis.toFloat()
             }
         }
     }
