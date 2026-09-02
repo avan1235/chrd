@@ -28,7 +28,6 @@ import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import `in`.procyk.chrd.component.liquid.LiquidBottomTab
 import `in`.procyk.chrd.component.liquid.LiquidBottomTabs
-import `in`.procyk.chrd.db.AppSettings
 import `in`.procyk.chrd.db.ThemeMode
 import `in`.procyk.chrd.db.rememberAppSettingsRepository
 import `in`.procyk.chrd.db.rememberSongRepository
@@ -168,10 +167,10 @@ fun ChrdApp(topPadding: Dp = 0.dp) {
                         modifier = Modifier.align(Alignment.BottomCenter),
                     ) {
                         val currentScreen = backStack.last()
-                        val currentTab = when {
-                            currentScreen is Screen.Search || currentScreen is Screen.SongDetails -> TabEntry.SONGS
-                            currentScreen is Screen.Favorites -> TabEntry.FAVORITES
-                            currentScreen is Screen.Settings -> TabEntry.SETTINGS
+                        val currentTab = when (currentScreen) {
+                            is Screen.Search, is Screen.SongDetails -> TabEntry.SONGS
+                            is Screen.Favorites -> TabEntry.FAVORITES
+                            is Screen.Settings -> TabEntry.SETTINGS
                             else -> TabEntry.SONGS
                         }
 
