@@ -99,6 +99,21 @@ private fun AutoScrollableSongView(
                     }
                 },
                 actions = {
+                    IconButton(onClick = viewModel::halfToneDown) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowCircleDown,
+                            contentDescription = "Half tone down",
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                    IconButton(onClick = viewModel::halfToneUp) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowCircleUp,
+                            contentDescription = "Half tone up",
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+
                     val isFavorite by viewModel.isFavorite.collectAsState()
                     IconButton(onClick = viewModel::toggleFavorite) {
                         Icon(

@@ -37,24 +37,39 @@ data class SongLine(
 
 @Serializable
 sealed interface LinePart {
+
+    fun transpose(delta: Int): LinePart
+
     @Serializable
     data class Lyric(
         val text: String,
-    ) : LinePart
+    ) : LinePart {
+
+        override fun transpose(delta: Int): Lyric = this
+    }
 
     @Serializable
     data class ChordedLyric(
         val text: String,
         val chord: Chord,
-    ) : LinePart
+    ) : LinePart {
+
+        override fun transpose(delta: Int): ChordedLyric = copy(chord = chord.transpose(delta))
+    }
 
     @Serializable
     data class ChordOverWhitespace(
         val chord: Chord,
-    ) : LinePart
+    ) : LinePart {
+
+        override fun transpose(delta: Int): ChordOverWhitespace = copy(chord = chord.transpose(delta))
+    }
 
     @Serializable
     data class ChordInText(
         val chord: Chord,
-    ) : LinePart
+    ) : LinePart {
+
+        override fun transpose(delta: Int): ChordInText = copy(chord = chord.transpose(delta))
+    }
 }
