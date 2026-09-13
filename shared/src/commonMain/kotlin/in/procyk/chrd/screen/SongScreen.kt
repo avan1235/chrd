@@ -2,10 +2,9 @@ package `in`.procyk.chrd.screen
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.AnimationConstants.DefaultDurationMillis
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -17,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.keepScreenOn
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -26,10 +26,9 @@ import `in`.procyk.chrd.component.Screen
 import `in`.procyk.chrd.component.liquid.LiquidBottomTabsSpacer
 import `in`.procyk.chrd.model.*
 import `in`.procyk.chrd.model.LinePart.*
-import `in`.procyk.chrd.ui.VerticalMarqueeSpacing
-import `in`.procyk.chrd.ui.basicVerticalMarquee
-import `in`.procyk.chrd.ui.rememberVerticalMarqueeState
 import `in`.procyk.chrd.viewmodel.SongViewModel
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 
 @Composable
@@ -51,7 +50,7 @@ internal fun SongScreen(
             else -> AutoScrollableSongView(
                 song = song,
                 viewModel = viewModel,
-                isFullScreen = isFullScreen,
+                isAutoScroll = isFullScreen,
                 onAutoScrollingChanged = onAutoScrollingChanged,
             )
         }
@@ -63,212 +62,222 @@ private fun AutoScrollableSongView(
     song: Song,
     viewModel: SongViewModel,
     modifier: Modifier = Modifier,
-    isFullScreen: Boolean,
+    isAutoScroll: Boolean,
     onAutoScrollingChanged: (Boolean) -> Unit,
 ) {
-    val marqueeState = rememberVerticalMarqueeState(initialIsPlaying = isFullScreen)
+    BoxWithConstraints {
+        val maxHeightPx = with(LocalDensity.current) { maxHeight.toPx() }
+        val state = rememberScrollState()
+        val scope = rememberCoroutineScope()
 
-    LaunchedEffect(isFullScreen, marqueeState) {
-        marqueeState.isPlaying = isFullScreen
-        snapshotFlow {
-            marqueeState.isPlaying
-        }.collect {
-            onAutoScrollingChanged(it)
+        fun resetScrollState() {
+            onAutoScrollingChanged(false)
+            scope.launch { state.animateScrollTo(0) }
         }
-    }
 
-    var speedMultiplier by remember { mutableFloatStateOf(1f) }
-    var clickedChord by remember { mutableStateOf<Chord?>(null) }
+        var speedMultiplier by remember { mutableFloatStateOf(1f) }
 
-    Screen(
-        modifier = modifier.keepScreenOn(),
-        topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(
-                            text = song.title,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Text(
-                            text = "by ${song.author}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = viewModel::halfToneDown) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowCircleDown,
-                            contentDescription = "Half tone down",
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
-                    }
-                    IconButton(onClick = viewModel::halfToneUp) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowCircleUp,
-                            contentDescription = "Half tone up",
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
-                    }
+        LaunchedEffect(isAutoScroll, speedMultiplier, state, maxHeightPx) {
+            if (!isAutoScroll) return@LaunchedEffect
 
-                    val isFavorite by viewModel.isFavorite.collectAsState()
-                    IconButton(onClick = viewModel::toggleFavorite) {
-                        Icon(
-                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Outlined.FavoriteBorder,
-                            contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
-                            tint = if (isFavorite) MaterialTheme.colorScheme.primary else LocalContentColor.current,
-                        )
-                    }
-                },
+            val leftPixels = state.run { maxValue - value }
+            state.animateScrollTo(
+                value = state.maxValue,
+                animationSpec = tween(
+                    durationMillis = (12_000 * leftPixels / (maxHeightPx * speedMultiplier)).roundToInt(),
+                    easing = LinearEasing,
+                )
             )
-        },
-        topBarVisible = !isFullScreen,
-        floatingActionButton = {
-            Column(
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                AnimatedVisibility(
-                    visible = isFullScreen && marqueeState.maxOffset > 0f,
-                    enter =
-                        if (marqueeState.offset <= 0) fadeIn() + slideInVertically(initialOffsetY = { it / 2 })
-                        else fadeIn(tween(DefaultDurationMillis, DefaultDurationMillis)) + slideInVertically(
+        }
+
+        if (isAutoScroll) LaunchedEffect(state) {
+            snapshotFlow { state.isScrollInProgress }.collect { if (!it) resetScrollState() }
+        }
+
+        var clickedChord by remember { mutableStateOf<Chord?>(null) }
+
+        Screen(
+            modifier = modifier.keepScreenOn(),
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Column {
+                            Text(
+                                text = song.title,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Text(
+                                text = "by ${song.author}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = viewModel::halfToneDown) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowCircleDown,
+                                contentDescription = "Half tone down",
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                        IconButton(onClick = viewModel::halfToneUp) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowCircleUp,
+                                contentDescription = "Half tone up",
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+
+                        val isFavorite by viewModel.isFavorite.collectAsState()
+                        IconButton(onClick = viewModel::toggleFavorite) {
+                            Icon(
+                                imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Outlined.FavoriteBorder,
+                                contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
+                                tint = if (isFavorite) MaterialTheme.colorScheme.primary else LocalContentColor.current,
+                            )
+                        }
+                    },
+                )
+            },
+            topBarVisible = !isAutoScroll,
+            floatingActionButton = {
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    AnimatedVisibility(
+                        visible = isAutoScroll && state.maxValue > 0f,
+                        enter =
+                            if (state.value <= 0) fadeIn() + slideInVertically(initialOffsetY = { it / 2 })
+                            else fadeIn(tween(DefaultDurationMillis, DefaultDurationMillis)) + slideInVertically(
+                                initialOffsetY = { it / 2 },
+                                animationSpec = tween(DefaultDurationMillis, DefaultDurationMillis),
+                            ),
+                        exit =
+                            if (state.value <= 0) fadeOut() + slideOutVertically(targetOffsetY = { it / 2 })
+                            else fadeOut(tween(DefaultDurationMillis)) + slideOutVertically(
+                                targetOffsetY = { it / 2 },
+                                animationSpec = tween(DefaultDurationMillis),
+                            ),
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.End,
+                            verticalArrangement = Arrangement.spacedBy(2.dp),
+                        ) {
+                            SmallFloatingActionButton(
+                                onClick = { speedMultiplier *= 1.5f },
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = "Scroll Faster",
+                                )
+                            }
+
+                            SmallFloatingActionButton(
+                                // Prevent speed from dropping to 0
+                                onClick = { speedMultiplier = maxOf(0.1f, speedMultiplier / 1.5f) },
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Remove,
+                                    contentDescription = "Scroll Slower",
+                                )
+                            }
+                        }
+                    }
+
+                    AnimatedVisibility(
+                        visible = !isAutoScroll && state.value > 0 && state.maxValue > 0,
+                        enter = fadeIn(tween(DefaultDurationMillis, DefaultDurationMillis)) + slideInVertically(
                             initialOffsetY = { it / 2 },
                             animationSpec = tween(DefaultDurationMillis, DefaultDurationMillis),
                         ),
-                    exit =
-                        if (marqueeState.offset <= 0) fadeOut() + slideOutVertically(targetOffsetY = { it / 2 })
-                        else fadeOut(tween(DefaultDurationMillis)) + slideOutVertically(
+                        exit = fadeOut(tween(DefaultDurationMillis)) + slideOutVertically(
                             targetOffsetY = { it / 2 },
                             animationSpec = tween(DefaultDurationMillis),
                         ),
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.End,
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
                         SmallFloatingActionButton(
-                            onClick = { speedMultiplier *= 1.5f },
+                            onClick = {
+                                onAutoScrollingChanged(false)
+                                scope.launch { state.animateScrollTo(0) }
+                            },
                             containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = "Scroll Faster",
+                                imageVector = Icons.Default.Replay,
+                                contentDescription = "Reset Scroll",
                             )
                         }
+                    }
 
-                        SmallFloatingActionButton(
-                            // Prevent speed from dropping to 0
-                            onClick = { speedMultiplier = maxOf(0.1f, speedMultiplier / 1.5f) },
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+
+                    AnimatedVisibility(
+                        visible = state.maxValue > 0f,
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                    ) {
+                        FloatingActionButton(
+                            onClick = { onAutoScrollingChanged(!isAutoScroll) },
+                            containerColor = MaterialTheme.colorScheme.primary,
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Remove,
-                                contentDescription = "Scroll Slower",
+                                imageVector = if (isAutoScroll) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                contentDescription = if (isAutoScroll) "Pause Auto-scroll" else "Start Auto-scroll",
                             )
                         }
                     }
+                    val useLiquidNavigation by viewModel.useLiquidNavigation.collectAsState()
+                    LiquidBottomTabsSpacer(useLiquidNavigation && !isAutoScroll)
                 }
 
-                AnimatedVisibility(
-                    visible = !isFullScreen && marqueeState.offset > 0 && marqueeState.maxOffset > 0,
-                    enter = fadeIn(tween(DefaultDurationMillis, DefaultDurationMillis)) + slideInVertically(
-                        initialOffsetY = { it / 2 },
-                        animationSpec = tween(DefaultDurationMillis, DefaultDurationMillis),
-                    ),
-                    exit = fadeOut(tween(DefaultDurationMillis)) + slideOutVertically(
-                        targetOffsetY = { it / 2 },
-                        animationSpec = tween(DefaultDurationMillis),
-                    ),
-                ) {
-                    SmallFloatingActionButton(
-                        onClick = {
-                            onAutoScrollingChanged(false)
-                            marqueeState.restart()
-                        },
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Replay,
-                            contentDescription = "Reset Scroll",
-                        )
-                    }
+            },
+        ) { paddingValues ->
+            Column(
+                modifier = modifier
+                    .verticalScroll(state)
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp),
+            ) {
+                SongChordsView(song)
+
+                song.sections.forEach { section ->
+                    SongSectionView(section, onChordClick = { clickedChord = it })
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
-
-
-                AnimatedVisibility(
-                    visible = marqueeState.maxOffset > 0f,
-                    enter = fadeIn(),
-                    exit = fadeOut(),
-                ) {
-                    FloatingActionButton(
-                        onClick = { onAutoScrollingChanged(!isFullScreen) },
-                        containerColor = MaterialTheme.colorScheme.primary,
-                    ) {
-                        Icon(
-                            imageVector = if (isFullScreen) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            contentDescription = if (isFullScreen) "Pause Auto-scroll" else "Start Auto-scroll",
-                        )
-                    }
-                }
-                val useLiquidNavigation by viewModel.useLiquidNavigation.collectAsState()
-                LiquidBottomTabsSpacer(useLiquidNavigation && !isFullScreen)
-            }
-
-        },
-    ) { paddingValues ->
-        Column(
-            modifier = modifier
-                .basicVerticalMarquee(
-                    iterations = 1,
-                    repeatDelayMillis = 0,
-                    initialDelayMillis = 0,
-                    spacing = VerticalMarqueeSpacing(0.dp),
-                    velocity = 40.dp * speedMultiplier,
-                    showSecondCopy = false,
-                    state = marqueeState,
-                )
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp),
-        ) {
-            SongChordsView(song)
-
-            song.sections.forEach { section ->
-                SongSectionView(section, onChordClick = { clickedChord = it })
-                Spacer(modifier = Modifier.height(24.dp))
             }
         }
-    }
 
-    if (clickedChord != null) {
-        AlertDialog(
-            onDismissRequest = { clickedChord = null },
-            confirmButton = {
-                TextButton(onClick = { clickedChord = null }) {
-                    Text("Close")
-                }
-            },
-            title = {
-                Text(
-                    text = clickedChord!!.value,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            },
-            text = {
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    ChordDiagram(clickedChord!!)
-                }
-            },
-        )
+        if (clickedChord != null) {
+            AlertDialog(
+                onDismissRequest = { clickedChord = null },
+                confirmButton = {
+                    TextButton(onClick = { clickedChord = null }) {
+                        Text("Close")
+                    }
+                },
+                title = {
+                    Text(
+                        text = clickedChord!!.value,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                },
+                text = {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        ChordDiagram(clickedChord!!)
+                    }
+                },
+            )
+        }
     }
 }
 
