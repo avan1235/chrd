@@ -100,8 +100,12 @@ private fun AutoScrollableSongView(
             modifier = modifier.keepScreenOn(),
             topBar = {
                 TopAppBar(
+                    contentPadding = PaddingValues(vertical = 12.dp),
+                    colors = TopAppBarDefaults.topAppBarColors(MaterialTheme.colorScheme.surfaceContainer),
                     title = {
-                        Column {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
+                        ) {
                             Text(
                                 text = song.title,
                                 style = MaterialTheme.typography.titleLarge,
@@ -129,6 +133,8 @@ private fun AutoScrollableSongView(
                                 tint = MaterialTheme.colorScheme.primary,
                             )
                         }
+
+                        Spacer(Modifier.width(12.dp))
 
                         val isFavorite by viewModel.isFavorite.collectAsState()
                         IconButton(onClick = viewModel::toggleFavorite) {
@@ -262,7 +268,7 @@ private fun AutoScrollableSongView(
                 },
                 title = {
                     Text(
-                        text = clickedChord!!.value,
+                        text = "How to play ${clickedChord!!.value} chord?",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary,
