@@ -2,14 +2,9 @@ package `in`.procyk.chrd.screen
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.AnimationConstants.DefaultDurationMillis
-import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
-import androidx.compose.foundation.gestures.FlingBehavior
-import androidx.compose.foundation.gestures.ScrollScope
-import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -17,7 +12,6 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -36,68 +30,6 @@ import `in`.procyk.chrd.viewmodel.SongViewModel
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
-
-@Stable
-internal class LoggingScrollState(
-    val scrollState: ScrollState,
-    private val tag: String = "SongScreen",
-) {
-    fun formatValues(): String = Snapshot.withoutReadObservation {
-        "ScrollState(value=${scrollState.value}, maxValue=${scrollState.maxValue}, isScrollInProgress=${scrollState.isScrollInProgress}, canScrollForward=${scrollState.canScrollForward}, canScrollBackward=${scrollState.canScrollBackward})"
-    }
-
-    val value: Int
-        get() {
-            val v = scrollState.value
-            println("[$tag] Access state.value -> $v (${formatValues()})")
-            return v
-        }
-
-    val maxValue: Int
-        get() {
-            val mv = scrollState.maxValue
-            println("[$tag] Access state.maxValue -> $mv (${formatValues()})")
-            return mv
-        }
-
-    val isScrollInProgress: Boolean
-        get() {
-            val inProgress = scrollState.isScrollInProgress
-            println("[$tag] Access state.isScrollInProgress -> $inProgress (${formatValues()})")
-            return inProgress
-        }
-
-    suspend fun animateScrollTo(
-        value: Int,
-        animationSpec: AnimationSpec<Float> = spring(),
-    ) {
-        println("[$tag] Call state.animateScrollTo(value=$value) starting: ${formatValues()}")
-        try {
-            scrollState.animateScrollTo(value, animationSpec)
-            println("[$tag] Completed state.animateScrollTo(value=$value): ${formatValues()}")
-        } catch (e: Throwable) {
-            println("[$tag] Failed/Cancelled state.animateScrollTo(value=$value): ${e::class.simpleName}: ${e.message}, ${formatValues()}")
-            throw e
-        }
-    }
-
-    override fun toString(): String = formatValues()
-
-    override fun equals(other: Any?): Boolean =
-        if (other is LoggingScrollState) scrollState == other.scrollState else scrollState == other
-
-    override fun hashCode(): Int = scrollState.hashCode()
-}
-
-private fun Modifier.verticalScroll(
-    state: LoggingScrollState,
-    enabled: Boolean = true,
-    flingBehavior: FlingBehavior? = null,
-    reverseScrolling: Boolean = false,
-): Modifier {
-    println("[SongScreen] Modifier.verticalScroll applied with state: ${state.formatValues()}")
-    return this.verticalScroll(state.scrollState, enabled, flingBehavior, reverseScrolling)
-}
 
 @Composable
 internal fun SongScreen(
@@ -135,60 +67,31 @@ private fun AutoScrollableSongView(
 ) {
     BoxWithConstraints {
         val maxHeightPx = with(LocalDensity.current) { maxHeight.toPx() }
-        val rawState = rememberScrollState()
-        val state = remember(rawState) { LoggingScrollState(rawState) }
+        val state = rememberScrollState()
         val scope = rememberCoroutineScope()
 
-        fun resetScrollState(caller: String = "unspecified") {
-            println("[SongScreen] resetScrollState called (caller: $caller), current state: $state")
+        fun resetScrollState() {
             onAutoScrollingChanged(false)
-            scope.launch {
-                println("[SongScreen] resetScrollState: launching animateScrollTo(0)")
-                state.animateScrollTo(0)
-            }
+            scope.launch { state.animateScrollTo(0) }
         }
 
         var speedMultiplier by remember { mutableFloatStateOf(1f) }
 
-        LaunchedEffect(state) {
-            snapshotFlow { state.maxValue }.collect { maxVal ->
-                println("[SongScreen] state.maxValue changed to $maxVal (state: $state)")
-            }
-        }
-
         LaunchedEffect(isAutoScroll, speedMultiplier, state, maxHeightPx) {
-            println("[SongScreen] LaunchedEffect auto-scroll: isAutoScroll=$isAutoScroll, speedMultiplier=$speedMultiplier, maxHeightPx=$maxHeightPx, state: $state")
-            if (!isAutoScroll) {
-                println("[SongScreen] LaunchedEffect auto-scroll: isAutoScroll is false, returning")
-                return@LaunchedEffect
-            }
+            if (!isAutoScroll) return@LaunchedEffect
 
             val leftPixels = state.run { maxValue - value }
-            val durationMillis = (12_000 * leftPixels / (maxHeightPx * speedMultiplier)).roundToInt()
-            println("[SongScreen] LaunchedEffect auto-scroll starting: leftPixels=$leftPixels, durationMillis=$durationMillis, target=${state.maxValue}")
-            try {
-                state.animateScrollTo(
-                    value = state.maxValue,
-                    animationSpec = tween(
-                        durationMillis = durationMillis,
-                        easing = LinearEasing,
-                    )
+            state.animateScrollTo(
+                value = state.maxValue,
+                animationSpec = tween(
+                    durationMillis = (12_000 * leftPixels / (maxHeightPx * speedMultiplier)).roundToInt(),
+                    easing = LinearEasing,
                 )
-                println("[SongScreen] LaunchedEffect auto-scroll: animateScrollTo completed, state: $state")
-            } catch (e: Throwable) {
-                println("[SongScreen] LaunchedEffect auto-scroll: animateScrollTo cancelled/failed: ${e::class.simpleName}: ${e.message}, state: $state")
-            }
+            )
         }
 
         if (isAutoScroll) LaunchedEffect(state) {
-            println("[SongScreen] LaunchedEffect(state) started for isAutoScroll=true, state: $state")
-            snapshotFlow { state.isScrollInProgress }.collect { inProgress ->
-                println("[SongScreen] snapshotFlow isScrollInProgress emitted: $inProgress, state: $state")
-                if (!inProgress) {
-                    println("[SongScreen] isScrollInProgress became false while isAutoScroll=true -> calling resetScrollState")
-                    resetScrollState(caller = "snapshotFlow(!isScrollInProgress)")
-                }
-            }
+            snapshotFlow { state.isScrollInProgress }.collect { if (!it) resetScrollState() }
         }
 
         var clickedChord by remember { mutableStateOf<Chord?>(null) }
@@ -269,10 +172,7 @@ private fun AutoScrollableSongView(
                             verticalArrangement = Arrangement.spacedBy(2.dp),
                         ) {
                             SmallFloatingActionButton(
-                                onClick = {
-                                    speedMultiplier *= 1.5f
-                                    println("[SongScreen] Speed multiplier increased to $speedMultiplier, current state: $state")
-                                },
+                                onClick = { speedMultiplier *= 1.5f },
                                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                             ) {
                                 Icon(
@@ -283,10 +183,7 @@ private fun AutoScrollableSongView(
 
                             SmallFloatingActionButton(
                                 // Prevent speed from dropping to 0
-                                onClick = {
-                                    speedMultiplier = maxOf(0.1f, speedMultiplier / 1.5f)
-                                    println("[SongScreen] Speed multiplier decreased to $speedMultiplier, current state: $state")
-                                },
+                                onClick = { speedMultiplier = maxOf(0.1f, speedMultiplier / 1.5f) },
                                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                             ) {
                                 Icon(
@@ -310,8 +207,8 @@ private fun AutoScrollableSongView(
                     ) {
                         SmallFloatingActionButton(
                             onClick = {
-                                println("[SongScreen] Reset scroll FAB clicked")
-                                resetScrollState(caller = "Reset scroll FAB")
+                                onAutoScrollingChanged(false)
+                                scope.launch { state.animateScrollTo(0) }
                             },
                             containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         ) {
@@ -329,10 +226,7 @@ private fun AutoScrollableSongView(
                         exit = fadeOut(),
                     ) {
                         FloatingActionButton(
-                            onClick = {
-                                println("[SongScreen] Auto-scroll Play/Pause FAB clicked: toggling isAutoScroll from $isAutoScroll to ${!isAutoScroll}, current state: $state")
-                                onAutoScrollingChanged(!isAutoScroll)
-                            },
+                            onClick = { onAutoScrollingChanged(!isAutoScroll) },
                             containerColor = MaterialTheme.colorScheme.primary,
                         ) {
                             Icon(
