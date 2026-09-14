@@ -113,6 +113,7 @@ fun SearchScreen(
                     onClick = viewModel::onRequestSearch,
                     shape = RoundedCornerShape(4.dp, 24.dp, 24.dp, 4.dp),
                     modifier = Modifier.size(60.dp),
+                    enabled = !isLoadingSongs,
                 ) {
                     Icon(Icons.Default.Search, contentDescription = null)
                 }
