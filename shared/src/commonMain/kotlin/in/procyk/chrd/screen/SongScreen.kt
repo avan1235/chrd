@@ -101,7 +101,6 @@ private fun AutoScrollableSongView(
             topBar = {
                 TopAppBar(
                     contentPadding = PaddingValues(vertical = 12.dp),
-                    colors = TopAppBarDefaults.topAppBarColors(MaterialTheme.colorScheme.surfaceContainer),
                     title = {
                         Column(
                             verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
