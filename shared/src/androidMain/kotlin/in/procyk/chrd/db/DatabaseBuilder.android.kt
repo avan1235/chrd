@@ -21,7 +21,6 @@ private fun buildAppDatabase(context: Context): AppDatabase {
         name = dbFile.absolutePath,
     )
         .addMigrations(*MIGRATIONS)
-        .fallbackToDestructiveMigration()
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
         .build()

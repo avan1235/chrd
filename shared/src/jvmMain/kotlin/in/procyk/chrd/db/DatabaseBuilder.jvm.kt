@@ -20,7 +20,6 @@ private fun buildAppDatabase(): AppDatabase {
         factory = { AppDatabaseConstructor.initialize() },
     )
         .addMigrations(*MIGRATIONS)
-        .fallbackToDestructiveMigration()
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
         .build()
