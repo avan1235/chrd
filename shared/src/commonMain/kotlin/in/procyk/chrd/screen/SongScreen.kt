@@ -27,6 +27,8 @@ import `in`.procyk.chrd.component.liquid.LiquidBottomTabsSpacer
 import `in`.procyk.chrd.model.*
 import `in`.procyk.chrd.model.LinePart.*
 import `in`.procyk.chrd.viewmodel.SongViewModel
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -81,17 +83,28 @@ private fun AutoScrollableSongView(
             if (!isAutoScroll) return@LaunchedEffect
 
             val leftPixels = state.run { maxValue - value }
-            state.animateScrollTo(
-                value = state.maxValue,
-                animationSpec = tween(
-                    durationMillis = (12_000 * leftPixels / (maxHeightPx * speedMultiplier)).roundToInt(),
-                    easing = LinearEasing,
-                )
-            )
-        }
+            if (leftPixels <= 0) {
+                onAutoScrollingChanged(false)
+                return@LaunchedEffect
+            }
 
-        if (isAutoScroll) LaunchedEffect(state) {
-            snapshotFlow { state.isScrollInProgress }.collect { if (!it) resetScrollState() }
+            val durationMillis = (12_000 * leftPixels / (maxHeightPx * speedMultiplier)).roundToInt()
+
+            try {
+                state.animateScrollTo(
+                    value = state.maxValue,
+                    animationSpec = tween(durationMillis = durationMillis, easing = LinearEasing)
+                )
+                resetScrollState()
+
+            } catch (e: CancellationException) {
+                if (coroutineContext.isActive) {
+                    // the coroutine itself is still active - the cancellation
+                    // came from the user touching the screen to manually scroll
+                    onAutoScrollingChanged(false)
+                }
+                throw e
+            }
         }
 
         var clickedChord by remember { mutableStateOf<Chord?>(null) }
