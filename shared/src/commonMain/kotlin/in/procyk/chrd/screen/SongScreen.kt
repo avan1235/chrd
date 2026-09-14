@@ -267,6 +267,9 @@ private fun AutoScrollableSongView(
                     SongSectionView(section, onChordClick = { clickedChord = it })
                     Spacer(modifier = Modifier.height(24.dp))
                 }
+
+                val useLiquidNavigation by viewModel.useLiquidNavigation.collectAsState()
+                LiquidBottomTabsSpacer(useLiquidNavigation)
             }
         }
 
