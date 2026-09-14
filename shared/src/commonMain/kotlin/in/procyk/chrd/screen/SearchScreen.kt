@@ -50,7 +50,7 @@ fun SearchScreen(
                         top = 16.dp,
                         start = 16.dp,
                         end = 16.dp,
-                        bottom = if (useLiquidNavigation) 176.dp else 96.dp,
+                        bottom = if (useLiquidNavigation) 184.dp else 96.dp,
                     ),
             ) {
                 items(results) { song ->
@@ -95,7 +95,7 @@ fun SearchScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 OutlinedTextField(
-                    shape = RoundedCornerShape(24.dp, 4.dp, 4.dp, 24.dp),
+                    shape = RoundedCornerShape(12.dp, 4.dp, 4.dp, 12.dp),
                     modifier = Modifier
                         .weight(1f, fill = true)
                         .defaultMinSize(minHeight = 60.dp),
@@ -111,7 +111,7 @@ fun SearchScreen(
                 )
                 FilledIconButton(
                     onClick = viewModel::onRequestSearch,
-                    shape = RoundedCornerShape(4.dp, 24.dp, 24.dp, 4.dp),
+                    shape = RoundedCornerShape(4.dp, 12.dp, 12.dp, 4.dp),
                     modifier = Modifier.size(60.dp),
                     enabled = !isLoadingSongs,
                 ) {
