@@ -108,6 +108,7 @@ private fun AutoScrollableSongView(
         }
 
         var clickedChord by remember { mutableStateOf<Chord?>(null) }
+        val handleChordClick = remember { fun(it: Chord) { clickedChord = it } }
 
         Screen(
             modifier = modifier.keepScreenOn(),
@@ -161,20 +162,22 @@ private fun AutoScrollableSongView(
             },
             topBarVisible = !isAutoScroll,
             floatingActionButton = {
+                val isAtTop by remember { derivedStateOf { state.value <= 0 } }
+                val hasScroll by remember { derivedStateOf { state.maxValue > 0f } }
                 Column(
                     horizontalAlignment = Alignment.End,
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     AnimatedVisibility(
-                        visible = isAutoScroll && state.maxValue > 0f,
+                        visible = isAutoScroll && hasScroll,
                         enter =
-                            if (state.value <= 0) fadeIn() + slideInVertically(initialOffsetY = { it / 2 })
+                            if (isAtTop) fadeIn() + slideInVertically(initialOffsetY = { it / 2 })
                             else fadeIn(tween(DefaultDurationMillis, DefaultDurationMillis)) + slideInVertically(
                                 initialOffsetY = { it / 2 },
                                 animationSpec = tween(DefaultDurationMillis, DefaultDurationMillis),
                             ),
                         exit =
-                            if (state.value <= 0) fadeOut() + slideOutVertically(targetOffsetY = { it / 2 })
+                            if (isAtTop) fadeOut() + slideOutVertically(targetOffsetY = { it / 2 })
                             else fadeOut(tween(DefaultDurationMillis)) + slideOutVertically(
                                 targetOffsetY = { it / 2 },
                                 animationSpec = tween(DefaultDurationMillis),
@@ -208,7 +211,7 @@ private fun AutoScrollableSongView(
                     }
 
                     AnimatedVisibility(
-                        visible = !isAutoScroll && state.value > 0 && state.maxValue > 0,
+                        visible = !isAutoScroll && !isAtTop && hasScroll,
                         enter = fadeIn(tween(DefaultDurationMillis, DefaultDurationMillis)) + slideInVertically(
                             initialOffsetY = { it / 2 },
                             animationSpec = tween(DefaultDurationMillis, DefaultDurationMillis),
@@ -234,7 +237,7 @@ private fun AutoScrollableSongView(
 
 
                     AnimatedVisibility(
-                        visible = state.maxValue > 0f,
+                        visible = hasScroll,
                         enter = fadeIn(),
                         exit = fadeOut(),
                     ) {
@@ -264,7 +267,7 @@ private fun AutoScrollableSongView(
                 SongChordsView(song)
 
                 song.sections.forEach { section ->
-                    SongSectionView(section, onChordClick = { clickedChord = it })
+                    SongSectionView(section, onChordClick = handleChordClick)
                     Spacer(modifier = Modifier.height(24.dp))
                 }
 
