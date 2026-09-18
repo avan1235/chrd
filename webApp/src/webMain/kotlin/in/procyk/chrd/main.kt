@@ -15,7 +15,11 @@ import org.jetbrains.compose.resources.preloadFont
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
     val topPadding = if (isMobileClient()) 40.dp else 0.dp
-    ComposeViewport {
+    ComposeViewport(
+        configure = {
+            isA11YEnabled = false
+        }
+    ) {
         WithFontResourcesLoaded {
             ChrdApp(topPadding = topPadding)
         }
