@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.kyant.shapes.Capsule
 import `in`.procyk.chrd.component.Screen
@@ -52,7 +53,7 @@ fun SearchScreen(
                         top = 16.dp,
                         start = 16.dp,
                         end = 16.dp,
-                        bottom = if (useLiquidNavigation) 184.dp else 96.dp,
+                        bottom = if (useLiquidNavigation) 188.dp else 100.dp,
                     ),
             ) {
                 items(results) { song ->
@@ -114,6 +115,13 @@ fun SearchScreen(
                             disabledContainerColor = containerColor,
                             errorContainerColor = containerColor,
                         ),
+                        placeholder = {
+                            Text(
+                                "Search songs by titles or authors…",
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        },
                         trailingIcon = {
                             FilledIconButton(
                                 onClick = viewModel::onRequestSearch,
