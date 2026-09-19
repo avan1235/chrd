@@ -2,11 +2,9 @@ package `in`.procyk.chrd.model
 
 import com.fleeksoft.ksoup.nodes.Document
 import io.ktor.http.*
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 
 @Serializable
 class UltimateSongsOrigin(
@@ -27,22 +25,17 @@ class UltimateSongsOrigin(
     }
 
     private fun parseSongListings(document: Document): List<SongListing> {
-        val jsStore = document.select(".js-store").firstOrNull()
-        val dataContent = jsStore?.attr("data-content") ?: return emptyList()
-        val root = json.parseToJsonElement(dataContent) as JsonObject
-        val store = root["store"] as? JsonObject
-        val page = store?.get("page") as? JsonObject
-        val data = page?.get("data") as? JsonObject
-        val results = data?.get("results") as? JsonArray ?: return emptyList()
+        val dataContent = document.extractJsStoreData() ?: return emptyList()
+        val searchStore = json.decodeFromString<UltimateStore<UltimateSearchData>>(dataContent)
+        val results = searchStore.store?.page?.data?.results ?: return emptyList()
         return results.mapNotNull { result ->
-            val obj = result as? JsonObject ?: return@mapNotNull null
-            val songName = (obj["song_name"] as? JsonPrimitive)?.content
-                ?: (obj["localized_song_name"] as? JsonPrimitive)?.content
+            val songName = result.songName
+                ?: result.localizedSongName
                 ?: return@mapNotNull null
-            val artistName = (obj["artist_name"] as? JsonPrimitive)?.content
-                ?: (obj["localized_artist_name"] as? JsonPrimitive)?.content
+            val artistName = result.artistName
+                ?: result.localizedArtistName
                 ?: return@mapNotNull null
-            val tabUrl = (obj["tab_url"] as? JsonPrimitive)?.content
+            val tabUrl = result.tabUrl
                 ?: return@mapNotNull null
             SongListing(
                 title = songName,
@@ -54,29 +47,22 @@ class UltimateSongsOrigin(
     }
 
     override suspend fun parseSong(document: Document): Song {
-        val jsStore = document.select(".js-store").firstOrNull()
-        val dataContent = jsStore?.attr("data-content") ?: error("No .js-store found in document")
+        val dataContent = document.extractJsStoreData() ?: error("No .js-store found in document")
 
-        val root = json.parseToJsonElement(dataContent) as JsonObject
-        val store = root["store"] as? JsonObject
-        val page = store?.get("page") as? JsonObject
-        val data = page?.get("data") as? JsonObject
+        val songStore = json.decodeFromString<UltimateStore<UltimateSongData>>(dataContent)
+        val songData = songStore.store?.page?.data
 
-        val tab = data?.get("tab") as? JsonObject
-        val tabView = data?.get("tab_view") as? JsonObject
-        val wikiTab = tabView?.get("wiki_tab") as? JsonObject
+        val tab = songData?.tab
+        val title = tab?.songName
+            ?: tab?.localizedSongName
+            ?: document.selectFirst("h1")?.text()
+                .orEmpty()
 
-        val title = (tab?.get("song_name") as? JsonPrimitive)?.content
-            ?: (tab?.get("localized_song_name") as? JsonPrimitive)?.content
-            ?: document.select("h1").firstOrNull()?.text()
-            ?: ""
+        val author = tab?.artistName
+            ?: tab?.localizedArtistName
+                .orEmpty()
 
-        val author = (tab?.get("artist_name") as? JsonPrimitive)?.content
-            ?: (tab?.get("localized_artist_name") as? JsonPrimitive)?.content
-            ?: ""
-
-        val content = (wikiTab?.get("content") as? JsonPrimitive)?.content ?: ""
-
+        val content = songData?.tabView?.wikiTab?.content.orEmpty()
         val sections = parseWikiTabContent(content)
 
         return Song(
@@ -86,7 +72,7 @@ class UltimateSongsOrigin(
         )
     }
 
-    private fun parseWikiTabContent(content: String): List<SongSection> {
+    private fun parseWikiTabContent(content: String): List<SongSection> = buildList {
         val cleanContent = content
             .replace("\r\n", "\n")
             .replace("\r", "\n")
@@ -94,48 +80,18 @@ class UltimateSongsOrigin(
             .replace("[/tab]", "")
 
         val lines = cleanContent.lines()
-        val sections = mutableListOf<SongSection>()
-
         var currentType = SectionType.VERSE
         val currentLines = mutableListOf<SongLine>()
 
         fun flushSection() {
             if (currentLines.isNotEmpty()) {
-                sections.add(
+                add(
                     SongSection(
                         type = currentType,
                         lines = currentLines.toList(),
                     ),
                 )
                 currentLines.clear()
-            }
-        }
-
-        fun isSectionHeader(line: String): Boolean {
-            val trimmed = line.trim()
-            return trimmed.startsWith("[") &&
-                    trimmed.endsWith("]") &&
-                    !trimmed.contains("[ch]") &&
-                    !trimmed.contains("[/ch]") &&
-                    !trimmed.contains("[tab]") &&
-                    !trimmed.contains("[/tab]")
-        }
-
-        fun parseSectionType(headerText: String): SectionType {
-            val name = headerText.removePrefix("[").removeSuffix("]").trim()
-            return when {
-                name.contains("chorus", ignoreCase = true) || name.contains(
-                    "refren",
-                    ignoreCase = true
-                ) -> SectionType.CHORUS
-
-                name.contains("verse", ignoreCase = true) || name.contains(
-                    "zwrotka",
-                    ignoreCase = true
-                ) -> SectionType.VERSE
-
-                name.contains("bridge", ignoreCase = true) -> SectionType.BRIDGE
-                else -> SectionType.OTHER
             }
         }
 
@@ -153,7 +109,7 @@ class UltimateSongsOrigin(
             }
 
             val containsChords = rawLine.contains("[ch]")
-            val textWithoutChords = rawLine.replace(Regex("""\[ch].*?\[/ch]"""), "")
+            val textWithoutChords = rawLine.replace(CHORD_REGEX, "")
             val isPureChordLine = containsChords && textWithoutChords.isBlank()
 
             if (isPureChordLine) {
@@ -176,88 +132,107 @@ class UltimateSongsOrigin(
         }
 
         flushSection()
-        return sections
+    }
+
+    private fun isSectionHeader(line: String): Boolean {
+        val trimmed = line.trim()
+        return trimmed.startsWith("[") &&
+                trimmed.endsWith("]") &&
+                !trimmed.contains("[ch]") &&
+                !trimmed.contains("[/ch]") &&
+                !trimmed.contains("[tab]") &&
+                !trimmed.contains("[/tab]")
+    }
+
+    private fun parseSectionType(headerText: String): SectionType {
+        val name = headerText.removePrefix("[").removeSuffix("]").trim()
+        return when {
+            name.contains("chorus", ignoreCase = true) || name.contains(
+                "refren",
+                ignoreCase = true
+            ) -> SectionType.CHORUS
+
+            name.contains("verse", ignoreCase = true) || name.contains(
+                "zwrotka",
+                ignoreCase = true
+            ) -> SectionType.VERSE
+
+            name.contains("bridge", ignoreCase = true) -> SectionType.BRIDGE
+            else -> SectionType.OTHER
+        }
     }
 
     private fun parseChordAboveLyricLine(chordLine: String, lyricLine: String): SongLine {
-        val chords = mutableListOf<Pair<Int, String>>()
-        val chordRegex = Regex("""\[ch](.*?)\[/ch]""")
-        var plainIndex = 0
-        var lastMatchEnd = 0
-
-        for (match in chordRegex.findAll(chordLine)) {
-            val prefixLen = match.range.first - lastMatchEnd
-            plainIndex += prefixLen
-            val chordName = match.groupValues[1]
-            chords.add(plainIndex to chordName)
-            plainIndex += chordName.length
-            lastMatchEnd = match.range.last + 1
+        val chords = buildList {
+            var plainIndex = 0
+            var lastMatchEnd = 0
+            for (match in CHORD_REGEX.findAll(chordLine)) {
+                val prefixLen = match.range.first - lastMatchEnd
+                plainIndex += prefixLen
+                val chordName = match.groupValues[1]
+                add(plainIndex to chordName)
+                plainIndex += chordName.length
+                lastMatchEnd = match.range.last + 1
+            }
         }
 
-        val parts = mutableListOf<LinePart>()
-        var currentIndex = 0
+        val parts = buildList {
+            var currentIndex = 0
+            for (i in chords.indices) {
+                val (chordCol, chordName) = chords[i]
+                val nextChordCol = chords.getOrNull(i + 1)?.first ?: Int.MAX_VALUE
 
-        for (i in chords.indices) {
-            val (chordCol, chordName) = chords[i]
-            val nextChordCol = if (i + 1 < chords.size) chords[i + 1].first else Int.MAX_VALUE
-
-            if (chordCol > currentIndex) {
-                if (currentIndex < lyricLine.length) {
+                if (chordCol > currentIndex && currentIndex < lyricLine.length) {
                     val beforeSlice = lyricLine.substring(currentIndex, minOf(chordCol, lyricLine.length))
                     if (beforeSlice.isNotEmpty()) {
-                        parts.add(LinePart.Lyric(beforeSlice))
+                        add(LinePart.Lyric(beforeSlice))
                     }
                     currentIndex = minOf(chordCol, lyricLine.length)
                 }
-            }
 
-            val chord = Chord(chordName)
-            if (chordCol < lyricLine.length) {
-                val endIdx = minOf(nextChordCol, lyricLine.length)
-                val slice = lyricLine.substring(chordCol, endIdx)
-                parts.add(LinePart.ChordedLyric(slice, chord))
-                currentIndex = endIdx
-            } else {
-                parts.add(LinePart.ChordOverWhitespace(chord))
-            }
-        }
-
-        if (currentIndex < lyricLine.length) {
-            val remaining = lyricLine.substring(currentIndex)
-            if (remaining.isNotEmpty()) {
-                parts.add(LinePart.Lyric(remaining))
-            }
-        }
-
-        return SongLine(parts)
-    }
-
-    private fun parseChordOnlyLine(chordLine: String): SongLine {
-        val chordRegex = Regex("""\[ch](.*?)\[/ch]""")
-        val parts = chordRegex.findAll(chordLine).map {
-            LinePart.ChordInText(Chord(it.groupValues[1]))
-        }.toList()
-        return SongLine(parts)
-    }
-
-    private fun parseInlineChordLine(line: String): SongLine {
-        val chordRegex = Regex("""\[ch](.*?)\[/ch]""")
-        val parts = mutableListOf<LinePart>()
-        var lastIndex = 0
-        for (match in chordRegex.findAll(line)) {
-            if (match.range.first > lastIndex) {
-                val text = line.substring(lastIndex, match.range.first)
-                if (text.isNotEmpty()) {
-                    parts.add(LinePart.Lyric(text))
+                val chord = Chord(chordName)
+                if (chordCol < lyricLine.length) {
+                    val endIdx = minOf(nextChordCol, lyricLine.length)
+                    val slice = lyricLine.substring(chordCol, endIdx)
+                    add(LinePart.ChordedLyric(slice, chord))
+                    currentIndex = endIdx
+                } else {
+                    add(LinePart.ChordOverWhitespace(chord))
                 }
             }
-            parts.add(LinePart.ChordInText(Chord(match.groupValues[1])))
-            lastIndex = match.range.last + 1
+
+            if (currentIndex < lyricLine.length) {
+                val remaining = lyricLine.substring(currentIndex)
+                if (remaining.isNotEmpty()) {
+                    add(LinePart.Lyric(remaining))
+                }
+            }
         }
-        if (lastIndex < line.length) {
-            val text = line.substring(lastIndex)
-            if (text.isNotEmpty()) {
-                parts.add(LinePart.Lyric(text))
+
+        return SongLine(parts)
+    }
+
+    private fun parseChordOnlyLine(chordLine: String): SongLine =
+        SongLine(CHORD_REGEX.findAll(chordLine).map { LinePart.ChordInText(Chord(it.groupValues[1])) }.toList())
+
+    private fun parseInlineChordLine(line: String): SongLine {
+        val parts = buildList {
+            var lastIndex = 0
+            for (match in CHORD_REGEX.findAll(line)) {
+                if (match.range.first > lastIndex) {
+                    val text = line.substring(lastIndex, match.range.first)
+                    if (text.isNotEmpty()) {
+                        add(LinePart.Lyric(text))
+                    }
+                }
+                add(LinePart.ChordInText(Chord(match.groupValues[1])))
+                lastIndex = match.range.last + 1
+            }
+            if (lastIndex < line.length) {
+                val text = line.substring(lastIndex)
+                if (text.isNotEmpty()) {
+                    add(LinePart.Lyric(text))
+                }
             }
         }
         return SongLine(parts)
@@ -265,6 +240,63 @@ class UltimateSongsOrigin(
 
     companion object {
         private val json = Json { ignoreUnknownKeys = true }
+        private val CHORD_REGEX = Regex("""\[ch](.*?)\[/ch]""")
     }
-
 }
+
+private fun Document.extractJsStoreData(): String? =
+    selectFirst(".js-store")?.attr("data-content")
+
+
+@Serializable
+private data class UltimateStore<T>(
+    @SerialName("store") val store: PageStore<T>? = null,
+) {
+    @Serializable
+    data class PageStore<T>(
+        @SerialName("page") val page: Page<T>? = null,
+    )
+
+    @Serializable
+    data class Page<T>(
+        @SerialName("data") val data: T? = null,
+    )
+}
+
+@Serializable
+private data class UltimateSearchData(
+    @SerialName("results") val results: List<UltimateSearchResultDto>? = null,
+)
+
+@Serializable
+private data class UltimateSearchResultDto(
+    @SerialName("song_name") val songName: String? = null,
+    @SerialName("localized_song_name") val localizedSongName: String? = null,
+    @SerialName("artist_name") val artistName: String? = null,
+    @SerialName("localized_artist_name") val localizedArtistName: String? = null,
+    @SerialName("tab_url") val tabUrl: String? = null,
+)
+
+@Serializable
+private data class UltimateSongData(
+    @SerialName("tab") val tab: UltimateTabDto? = null,
+    @SerialName("tab_view") val tabView: UltimateTabViewDto? = null,
+)
+
+@Serializable
+private data class UltimateTabDto(
+    @SerialName("song_name") val songName: String? = null,
+    @SerialName("localized_song_name") val localizedSongName: String? = null,
+    @SerialName("artist_name") val artistName: String? = null,
+    @SerialName("localized_artist_name") val localizedArtistName: String? = null,
+)
+
+@Serializable
+private data class UltimateTabViewDto(
+    @SerialName("wiki_tab") val wikiTab: UltimateWikiTabDto? = null,
+)
+
+@Serializable
+private data class UltimateWikiTabDto(
+    @SerialName("content") val content: String? = null,
+)
