@@ -47,7 +47,7 @@ class SearchViewModel : ViewModel() {
 
     init {
         viewModelScope.launch {
-            searchRequests.debounce(1.seconds).collectLatest { request ->
+            searchRequests.collectLatest { request ->
                 when (request) {
                     Init -> {}
                     is Search -> {
