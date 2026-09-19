@@ -8,7 +8,7 @@ import kotlinx.serialization.json.Json
 
 @Serializable
 class UltimateSongsOrigin(
-    private val baseUrl: String,
+    override val baseUrl: String,
 ) : SongsOrigin() {
 
     override suspend fun find(phrase: String): List<SongListing> {

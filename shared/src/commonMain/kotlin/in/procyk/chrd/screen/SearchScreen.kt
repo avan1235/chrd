@@ -75,10 +75,23 @@ fun SearchScreen(
 
                             Spacer(modifier = Modifier.height(4.dp))
 
-                            Text(
-                                text = song.author,
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
+                            Row(
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = song.author,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.padding(end = 16.dp),
+                                )
+                                Text(
+                                    text = song.origin.name,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    style = MaterialTheme.typography.bodySmall.run { copy(color = color.copy(alpha = 0.5f)) },
+                                )
+                            }
                         }
                     }
                 }

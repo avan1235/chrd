@@ -1,5 +1,6 @@
 package `in`.procyk.chrd.model
 
+import androidx.compose.ui.text.capitalize
 import com.fleeksoft.ksoup.Ksoup
 import com.fleeksoft.ksoup.network.parseGetRequest
 import com.fleeksoft.ksoup.nodes.Document
@@ -13,6 +14,16 @@ sealed class SongsOrigin : AutoCloseable {
 
     @Transient
     protected val httpClient: HttpClient = ChrdHttpClient()
+
+    protected abstract val baseUrl: String
+
+    val name: String
+        get() = baseUrl
+            .substringAfter("://")
+            .substringBefore('/')
+            .split('.', '-')
+            .dropLast(1)
+            .joinToString(" ") { it.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() } }
 
     abstract suspend fun find(phrase: String): List<SongListing>
 

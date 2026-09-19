@@ -6,10 +6,11 @@ import com.fleeksoft.ksoup.nodes.Node
 import com.fleeksoft.ksoup.nodes.TextNode
 import io.ktor.http.*
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 @Serializable
 class SubversionSongsOrigin(
-    private val baseUrl: String,
+    override val baseUrl: String,
 ) : SongsOrigin() {
 
     override suspend fun find(phrase: String): List<SongListing> {
