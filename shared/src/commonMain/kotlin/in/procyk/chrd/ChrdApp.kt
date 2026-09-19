@@ -69,40 +69,49 @@ fun ChrdApp(topPadding: Dp = 0.dp) {
                         exit = slideOutVertically(targetOffsetY = { it }) + shrinkVertically(shrinkTowards = Alignment.Bottom) + fadeOut(),
                     ) {
                         NavigationBar {
-                            val currentScreen = backStack.last()
-                            NavigationBarItem(
-                                selected = currentScreen is Screen.Search || currentScreen is Screen.SongDetails,
-                                onClick = {
-                                    if (currentScreen !is Screen.Search && currentScreen !is Screen.SongDetails) {
-                                        backStack.clear()
-                                        backStack.add(Screen.Search)
-                                    }
-                                },
-                                icon = { Icon(Icons.Default.Search, contentDescription = "Songs") },
-                                label = { Text("Songs") },
-                            )
-                            NavigationBarItem(
-                                selected = currentScreen is Screen.Favorites,
-                                onClick = {
-                                    if (currentScreen !is Screen.Favorites) {
-                                        backStack.clear()
-                                        backStack.add(Screen.Favorites)
-                                    }
-                                },
-                                icon = { Icon(Icons.Default.Favorite, contentDescription = "Favorites") },
-                                label = { Text("Favorites") },
-                            )
-                            NavigationBarItem(
-                                selected = currentScreen is Screen.Settings,
-                                onClick = {
-                                    if (currentScreen !is Screen.Settings) {
-                                        backStack.clear()
-                                        backStack.add(Screen.Settings)
-                                    }
-                                },
-                                icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
-                                label = { Text("Settings") },
-                            )
+                            Box(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Row(
+                                    modifier = Modifier.width(480.dp)
+                                ) {
+                                    val currentScreen = backStack.last()
+                                    NavigationBarItem(
+                                        selected = currentScreen is Screen.Search || currentScreen is Screen.SongDetails,
+                                        onClick = {
+                                            if (currentScreen !is Screen.Search && currentScreen !is Screen.SongDetails) {
+                                                backStack.clear()
+                                                backStack.add(Screen.Search)
+                                            }
+                                        },
+                                        icon = { Icon(Icons.Default.Search, contentDescription = "Songs") },
+                                        label = { Text("Songs") },
+                                    )
+                                    NavigationBarItem(
+                                        selected = currentScreen is Screen.Favorites,
+                                        onClick = {
+                                            if (currentScreen !is Screen.Favorites) {
+                                                backStack.clear()
+                                                backStack.add(Screen.Favorites)
+                                            }
+                                        },
+                                        icon = { Icon(Icons.Default.Favorite, contentDescription = "Favorites") },
+                                        label = { Text("Favorites") },
+                                    )
+                                    NavigationBarItem(
+                                        selected = currentScreen is Screen.Settings,
+                                        onClick = {
+                                            if (currentScreen !is Screen.Settings) {
+                                                backStack.clear()
+                                                backStack.add(Screen.Settings)
+                                            }
+                                        },
+                                        icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
+                                        label = { Text("Settings") },
+                                    )
+                                }
+                            }
                         }
                     }
                 }
