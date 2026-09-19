@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.kyant.shapes.Capsule
 import `in`.procyk.chrd.component.Screen
 import `in`.procyk.chrd.component.liquid.LiquidBottomTabsSpacer
 import `in`.procyk.chrd.model.SongListing
@@ -100,7 +101,7 @@ fun SearchScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
                 ) {
                     OutlinedTextField(
-                        shape = RoundedCornerShape(12.dp, 4.dp, 4.dp, 12.dp),
+                        shape = Capsule(),
                         modifier = Modifier
                             .weight(1f, fill = true)
                             .defaultMinSize(minHeight = 60.dp),
@@ -113,15 +114,23 @@ fun SearchScreen(
                             disabledContainerColor = containerColor,
                             errorContainerColor = containerColor,
                         ),
+                        trailingIcon = {
+                            FilledIconButton(
+                                onClick = viewModel::onRequestSearch,
+                                shape = Capsule(),
+                                modifier = Modifier
+                                    .padding(4.dp)
+                                    .size(60.dp),
+                                enabled = !isLoadingSongs,
+                            ) {
+                                Icon(
+                                    Icons.Default.Search,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(30.dp)
+                                )
+                            }
+                        }
                     )
-                    FilledIconButton(
-                        onClick = viewModel::onRequestSearch,
-                        shape = RoundedCornerShape(4.dp, 12.dp, 12.dp, 4.dp),
-                        modifier = Modifier.size(60.dp),
-                        enabled = !isLoadingSongs,
-                    ) {
-                        Icon(Icons.Default.Search, contentDescription = null)
-                    }
                 }
             }
         }
