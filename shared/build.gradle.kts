@@ -109,6 +109,12 @@ kotlin {
     }
 }
 
+tasks.withType<Test> {
+    testLogging {
+        showStandardStreams = true
+    }
+}
+
 dependencies {
     androidRuntimeClasspath(libs.compose.uiTooling)
     add("kspAndroid", libs.room.compiler)
@@ -137,6 +143,11 @@ buildkonfig {
 
     defaultConfigs {
         buildConfigField(Type.STRING, "CORS_URL", env.CORS_URL.value)
+        buildConfigField(
+            Type.STRING,
+            "ULTIMATE_SONGS_ORIGIN_URL",
+            env.ULTIMATE_SONGS_ORIGIN_URL.value
+        )
         buildConfigField(
             Type.STRING,
             "SUBVERSION_PL_SONGS_ORIGIN_URL",

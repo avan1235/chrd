@@ -71,6 +71,21 @@ data class Chord(
     override fun toString(): String = "${root}${quality.suffix}"
 
     companion object {
+        val C get() = fromRootAndQuality(Note.C, ChordQuality.MAJOR)
+        val Cm get() = fromRootAndQuality(Note.C, ChordQuality.MINOR)
+        val C_SHARP get() = fromRootAndQuality(Note.C_SHARP, ChordQuality.MAJOR)
+        val C_SHARP_m get() = fromRootAndQuality(Note.C_SHARP, ChordQuality.MINOR)
+        val D get() = fromRootAndQuality(Note.D, ChordQuality.MAJOR)
+        val Dm get() = fromRootAndQuality(Note.D, ChordQuality.MINOR)
+        val E get() = fromRootAndQuality(Note.E, ChordQuality.MAJOR)
+        val Em get() = fromRootAndQuality(Note.E, ChordQuality.MINOR)
+        val F get() = fromRootAndQuality(Note.F, ChordQuality.MAJOR)
+        val G get() = fromRootAndQuality(Note.G, ChordQuality.MAJOR)
+        val A get() = fromRootAndQuality(Note.A, ChordQuality.MAJOR)
+        val Am get() = fromRootAndQuality(Note.A, ChordQuality.MINOR)
+        val B get() = fromRootAndQuality(Note.B, ChordQuality.MAJOR)
+        val Bm get() = fromRootAndQuality(Note.B, ChordQuality.MINOR)
+
         // --- The Chord Dictionary ---
         private val voicingDictionary: Map<Pair<Note, ChordQuality>, String> = mapOf(
             // --- Major Chords ---

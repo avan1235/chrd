@@ -37,6 +37,7 @@ jobs:
         if: job.status == 'success'
         run: |
           export CORS_URL=${{ secrets.CORS_URL }}
+          export ULTIMATE_SONGS_ORIGIN_URL=${{ secrets.ULTIMATE_SONGS_ORIGIN_URL }}
           export SUBVERSION_PL_SONGS_ORIGIN_URL=${{ secrets.SUBVERSION_PL_SONGS_ORIGIN_URL }}
           export SUBVERSION_EN_SONGS_ORIGIN_URL=${{ secrets.SUBVERSION_EN_SONGS_ORIGIN_URL }}
           chmod +x ./gradlew

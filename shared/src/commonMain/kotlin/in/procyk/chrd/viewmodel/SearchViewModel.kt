@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import `in`.procyk.chrd.model.SongListing
 import `in`.procyk.chrd.model.SongsOrigin
 import `in`.procyk.chrd.model.SubversionSongsOrigin
+import `in`.procyk.chrd.model.UltimateSongsOrigin
 import `in`.procyk.chrd.shared.ChrdSharedConfig
 import `in`.procyk.chrd.viewmodel.SearchRequest.Init
 import `in`.procyk.chrd.viewmodel.SearchRequest.Search
@@ -25,6 +26,7 @@ import kotlin.time.Duration.Companion.seconds
 class SearchViewModel : ViewModel() {
 
     private val origins = listOf<SongsOrigin>(
+        UltimateSongsOrigin(ChrdSharedConfig.ULTIMATE_SONGS_ORIGIN_URL),
         SubversionSongsOrigin(ChrdSharedConfig.SUBVERSION_PL_SONGS_ORIGIN_URL),
         SubversionSongsOrigin(ChrdSharedConfig.SUBVERSION_EN_SONGS_ORIGIN_URL),
     )
