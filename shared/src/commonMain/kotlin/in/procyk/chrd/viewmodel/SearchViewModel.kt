@@ -22,6 +22,8 @@ import kotlinx.coroutines.launch
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import com.github.terrakok.fuzzykot.extractSorted
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.supervisorScope
 
 @OptIn(FlowPreview::class)
 class SearchViewModel : ViewModel() {
@@ -53,9 +55,9 @@ class SearchViewModel : ViewModel() {
                         try {
                             isLoadingSongs.value = true
                             val phrase = request.phrase
-                            val found = origins.map {
-                                async { it.find(phrase) }
-                            }.awaitAll().flatten()
+                            val found = coroutineScope {
+                                origins.map { async { it.find(phrase) } }.awaitAll()
+                            }.flatten()
                             results.value = found
                                 .extractSorted(phrase, processor = { it.title })
                                 .map { it.referent }
