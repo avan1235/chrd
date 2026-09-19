@@ -69,7 +69,6 @@ chrd
 ├── webApp              # WebAssembly (WasmJS) & JavaScript browser launcher module
 │   └── src
 │       ├── wasmJsMain  # WasmJS entry point
-│       ├── jsMain      # JavaScript entry point
 │       └── webMain     # HTML index, PWA icons, and service worker
 └── shared              # Shared Compose Multiplatform UI & core logic
     ├── src
@@ -77,7 +76,6 @@ chrd
     │   ├── androidMain # Android database driver and UI preview tools
     │   ├── jvmMain     # Desktop SQLite driver implementation
     │   ├── iosMain     # iOS SQLite driver implementation
-    │   ├── jsMain      # Web JS SQLite Web Worker integration
     │   └── wasmJsMain  # Web WasmJS SQLite Web Worker integration
     └── schemas         # Room database schema definitions
 ```
@@ -126,10 +124,9 @@ A `Makefile` is provided for common development tasks:
   ```bash
   ./gradlew :shared:testAndroidHostTest
   ```
-- **Run Web tests (Wasm & JS)**:
+- **Run Web tests (Wasm)**:
   ```bash
   ./gradlew :shared:wasmJsTest
-  ./gradlew :shared:jsTest
   ```
 - **Run iOS tests** (macOS only):
   ```bash

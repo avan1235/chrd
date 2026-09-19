@@ -26,10 +26,6 @@ kotlin {
 
     jvm()
 
-    js {
-        browser()
-    }
-
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         browser()
@@ -123,7 +119,6 @@ dependencies {
     add("kspJvm", libs.room.compiler)
     add("kspIosArm64", libs.room.compiler)
     add("kspIosSimulatorArm64", libs.room.compiler)
-    add("kspJs", libs.room.compiler)
     add("kspWasmJs", libs.room.compiler)
 }
 

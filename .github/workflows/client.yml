@@ -33,7 +33,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build WASM and JS Distribution
+      - name: Build WASM Distribution
         if: job.status == 'success'
         run: |
           export CORS_URL=${{ secrets.CORS_URL }}
