@@ -53,7 +53,7 @@ fun SearchScreen(
                         top = 16.dp,
                         start = 16.dp,
                         end = 16.dp,
-                        bottom = if (useLiquidNavigation) 188.dp else 100.dp,
+                        bottom = if (useLiquidNavigation) 190.dp else 102.dp,
                     ),
             ) {
                 items(results) { song ->
