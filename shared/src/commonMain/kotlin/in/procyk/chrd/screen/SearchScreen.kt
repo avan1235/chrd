@@ -1,6 +1,7 @@
 package `in`.procyk.chrd.screen
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -85,37 +86,42 @@ fun SearchScreen(
                     modifier = Modifier.align(Alignment.Center),
                 )
             }
-            Row(
-                modifier = Modifier
+            Box(
+                Modifier
                     .padding(16.dp)
                     .padding(bottom = if (useLiquidNavigation) 88.dp else 0.dp)
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                contentAlignment = Alignment.Center,
             ) {
-                OutlinedTextField(
-                    shape = RoundedCornerShape(12.dp, 4.dp, 4.dp, 12.dp),
-                    modifier = Modifier
-                        .weight(1f, fill = true)
-                        .defaultMinSize(minHeight = 60.dp),
-                    value = query,
-                    onValueChange = viewModel::onQueryChanged,
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = containerColor,
-                        unfocusedContainerColor = containerColor,
-                        disabledContainerColor = containerColor,
-                        errorContainerColor = containerColor,
-                    ),
-                )
-                FilledIconButton(
-                    onClick = viewModel::onRequestSearch,
-                    shape = RoundedCornerShape(4.dp, 12.dp, 12.dp, 4.dp),
-                    modifier = Modifier.size(60.dp),
-                    enabled = !isLoadingSongs,
+                Row(
+                    modifier = Modifier.widthIn(max = 480.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
                 ) {
-                    Icon(Icons.Default.Search, contentDescription = null)
+                    OutlinedTextField(
+                        shape = RoundedCornerShape(12.dp, 4.dp, 4.dp, 12.dp),
+                        modifier = Modifier
+                            .weight(1f, fill = true)
+                            .defaultMinSize(minHeight = 60.dp),
+                        value = query,
+                        onValueChange = viewModel::onQueryChanged,
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = containerColor,
+                            unfocusedContainerColor = containerColor,
+                            disabledContainerColor = containerColor,
+                            errorContainerColor = containerColor,
+                        ),
+                    )
+                    FilledIconButton(
+                        onClick = viewModel::onRequestSearch,
+                        shape = RoundedCornerShape(4.dp, 12.dp, 12.dp, 4.dp),
+                        modifier = Modifier.size(60.dp),
+                        enabled = !isLoadingSongs,
+                    ) {
+                        Icon(Icons.Default.Search, contentDescription = null)
+                    }
                 }
             }
         }
