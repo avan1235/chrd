@@ -8,6 +8,7 @@ androidx-lifecycle = "2.11.0"
 composeMultiplatform = "1.12.0"
 buildKonfig = "0.22.0"
 dotenv = "4.0.0"
+fuzzykot = "1.0.0"
 kotlin = "2.4.10"
 kotlin-wrappers = "2026.8.4"
 kotlinx-coroutines = "1.11.0"
@@ -23,6 +24,7 @@ shapes = "1.2.1"
 ksoup = "0.2.6"
 
 [libraries]
+fuzzykot = { module = "com.github.terrakok:fuzzykot", version.ref = "fuzzykot" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
 compose-uiTooling = { module = "org.jetbrains.compose.ui:ui-tooling", version.ref = "composeMultiplatform" }

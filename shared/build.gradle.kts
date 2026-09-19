@@ -79,6 +79,8 @@ kotlin {
 
             implementation(compose.materialIconsExtended)
 
+            implementation(libs.fuzzykot)
+
             api(libs.room.runtime)
         }
         commonTest.dependencies {

@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
+import com.github.terrakok.fuzzykot.extractSorted
 
 @OptIn(FlowPreview::class)
 class SearchViewModel : ViewModel() {
@@ -51,9 +52,13 @@ class SearchViewModel : ViewModel() {
                         val startedLoading = Clock.System.now()
                         try {
                             isLoadingSongs.value = true
-                            results.value = origins.map {
-                                async { it.find(request.phrase) }
+                            val phrase = request.phrase
+                            val found = origins.map {
+                                async { it.find(phrase) }
                             }.awaitAll().flatten()
+                            results.value = found
+                                .extractSorted(phrase, processor = { it.title })
+                                .map { it.referent }
                         } finally {
                             val loadingTime = Clock.System.now() - startedLoading
                             if (loadingTime < MIN_SONGS_LOADING_ANIMATION) {
