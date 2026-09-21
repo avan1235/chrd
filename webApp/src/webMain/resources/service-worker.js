@@ -1,7 +1,24 @@
 let coepCredentialless = false;
 if (typeof window === 'undefined') {
+    const CACHE_VERSION = '{{OVERRIDE THIS IN DEPLOYMENT}}';
+    const CACHE_NAME = `chrd-app-cache-${CACHE_VERSION}`;
+    const CACHED_EXTENSIONS = ['.wasm', '.png', '.ico', '.ttf', '.cvr', '.css'];
+
     self.addEventListener("install", () => self.skipWaiting());
-    self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+
+    self.addEventListener("activate", (event) => {
+        event.waitUntil(
+            caches.keys().then(cacheNames => {
+                return Promise.all(
+                    cacheNames.map(cacheName => {
+                        if (cacheName.startsWith('chrd-app-cache-') && cacheName !== CACHE_NAME) {
+                            return caches.delete(cacheName);
+                        }
+                    })
+                );
+            }).then(() => self.clients.claim())
+        );
+    });
 
     self.addEventListener("message", (ev) => {
         if (!ev.data) {
@@ -9,9 +26,7 @@ if (typeof window === 'undefined') {
         } else if (ev.data.type === "deregister") {
             self.registration
                 .unregister()
-                .then(() => {
-                    return self.clients.matchAll();
-                })
+                .then(() => self.clients.matchAll())
                 .then(clients => {
                     clients.forEach((client) => client.navigate(client.url));
                 });
@@ -25,39 +40,60 @@ if (typeof window === 'undefined') {
         if (r.cache === "only-if-cached" && r.mode !== "same-origin") {
             return;
         }
+        const url = new URL(r.url);
+        const shouldCache = r.method === 'GET' &&
+            CACHED_EXTENSIONS.some(ext => url.pathname.endsWith(ext));
 
         const request = (coepCredentialless && r.mode === "no-cors")
-            ? new Request(r, {
-                credentials: "omit",
-            })
+            ? new Request(r, {credentials: "omit"})
             : r;
+
         event.respondWith(
-            fetch(request)
-                .then((response) => {
-                    if (response.status === 0) {
-                        return response;
-                    }
+            (async () => {
+                let response;
 
-                    const newHeaders = new Headers(response.headers);
-                    newHeaders.set("Cross-Origin-Embedder-Policy",
-                        coepCredentialless ? "credentialless" : "require-corp"
-                    );
-                    if (!coepCredentialless) {
-                        newHeaders.set("Cross-Origin-Resource-Policy", "cross-origin");
-                    }
-                    newHeaders.set("Cross-Origin-Opener-Policy", "same-origin");
+                // 1. Check cache first
+                if (shouldCache) {
+                    response = await caches.match(request);
+                }
 
-                    return new Response(response.body, {
-                        status: response.status,
-                        statusText: response.statusText,
-                        headers: newHeaders,
-                    });
-                })
-                .catch((e) => console.error(e))
+                // 2. Fallback to network if not in cache
+                if (!response) {
+                    response = await fetch(request);
+
+                    // 3. Cache the network response if applicable
+                    if (shouldCache && response && response.status === 200 && response.type === 'basic') {
+                        const responseToCache = response.clone();
+                        const cache = await caches.open(CACHE_NAME);
+                        cache.put(request, responseToCache);
+                    }
+                }
+
+                // 4. Apply COOP/COEP headers before returning (applies to both network AND cached responses)
+                if (response.status === 0) {
+                    return response;
+                }
+
+                const newHeaders = new Headers(response.headers);
+                newHeaders.set("Cross-Origin-Embedder-Policy",
+                    coepCredentialless ? "credentialless" : "require-corp"
+                );
+                if (!coepCredentialless) {
+                    newHeaders.set("Cross-Origin-Resource-Policy", "cross-origin");
+                }
+                newHeaders.set("Cross-Origin-Opener-Policy", "same-origin");
+
+                return new Response(response.body, {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: newHeaders,
+                });
+            })().catch((e) => console.error(e))
         );
     });
 
 } else {
+    // --- WINDOW CONTEXT: COOP/COEP REGISTRATION ---
     (() => {
         const reloadedBySelf = window.sessionStorage.getItem("coiReloadedBySelf");
         window.sessionStorage.removeItem("coiReloadedBySelf");
