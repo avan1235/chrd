@@ -1,0 +1,41 @@
+<resources>
+    <!-- Navigation -->
+    <string name="nav_songs">Utwory</string>
+    <string name="nav_favorites">Ulubione</string>
+    <string name="nav_settings">Ustawienia</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Ustawienia</string>
+    <string name="settings_appearance">Wygląd</string>
+    <string name="theme_system">Systemowy</string>
+    <string name="theme_light">Jasny</string>
+    <string name="theme_dark">Ciemny</string>
+    <string name="settings_liquid_glass_navigation">Nawigacja z płynnego szkła</string>
+
+    <!-- Search -->
+    <string name="search_placeholder">Szukaj utworów po tytule lub wykonawcy…</string>
+
+    <!-- Favorites -->
+    <string name="favorites">Ulubione</string>
+    <string name="favorites_empty">Brak ulubionych utworów</string>
+    <string name="favorites_remove_content_description">Usuń z ulubionych</string>
+
+    <!-- Song details & controls -->
+    <string name="song_by_author">autor: %s</string>
+    <string name="song_half_tone_down">Półton w dół</string>
+    <string name="song_half_tone_up">Półton w górę</string>
+    <string name="song_add_to_favorites">Dodaj do ulubionych</string>
+    <string name="song_remove_from_favorites">Usuń z ulubionych</string>
+    <string name="song_scroll_faster">Przewijaj szybciej</string>
+    <string name="song_scroll_slower">Przewijaj wolniej</string>
+    <string name="song_reset_scroll">Zresetuj przewijanie</string>
+    <string name="song_start_auto_scroll">Rozpocznij automatyczne przewijanie</string>
+    <string name="song_pause_auto_scroll">Wstrzymaj automatyczne przewijanie</string>
+    <string name="song_how_to_play_chord">Jak zagrać chwyt %s?</string>
+    <string name="common_close">Zamknij</string>
+
+    <!-- Song sections -->
+    <string name="section_verse">Zwrotka</string>
+    <string name="section_chorus">Refren</string>
+    <string name="section_bridge">Przejście</string>
+</resources>

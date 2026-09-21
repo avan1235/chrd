@@ -24,6 +24,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import chrd.shared.generated.resources.*
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import `in`.procyk.chrd.component.liquid.LiquidBottomTab
@@ -36,14 +37,16 @@ import `in`.procyk.chrd.viewmodel.AppSettingsViewModel
 import `in`.procyk.chrd.viewmodel.FavoritesViewModel
 import `in`.procyk.chrd.viewmodel.SearchViewModel
 import `in`.procyk.chrd.viewmodel.SongViewModel
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 private enum class TabEntry(
     val icon: ImageVector,
-    val label: String,
+    val labelRes: StringResource,
 ) {
-    SONGS(Icons.Default.Search, "Songs"),
-    FAVORITES(Icons.Default.Favorite, "Favorites"),
-    SETTINGS(Icons.Default.Settings, "Settings"),
+    SONGS(Icons.Default.Search, Res.string.nav_songs),
+    FAVORITES(Icons.Default.Favorite, Res.string.nav_favorites),
+    SETTINGS(Icons.Default.Settings, Res.string.nav_settings),
 }
 
 @Composable
@@ -85,8 +88,8 @@ fun ChrdApp(topPadding: Dp = 0.dp) {
                                                 backStack.add(Screen.Search)
                                             }
                                         },
-                                        icon = { Icon(Icons.Default.Search, contentDescription = "Songs") },
-                                        label = { Text("Songs") },
+                                        icon = { Icon(Icons.Default.Search, contentDescription = stringResource(Res.string.nav_songs)) },
+                                        label = { Text(stringResource(Res.string.nav_songs)) },
                                     )
                                     NavigationBarItem(
                                         selected = currentScreen is Screen.Favorites,
@@ -96,8 +99,8 @@ fun ChrdApp(topPadding: Dp = 0.dp) {
                                                 backStack.add(Screen.Favorites)
                                             }
                                         },
-                                        icon = { Icon(Icons.Default.Favorite, contentDescription = "Favorites") },
-                                        label = { Text("Favorites") },
+                                        icon = { Icon(Icons.Default.Favorite, contentDescription = stringResource(Res.string.nav_favorites)) },
+                                        label = { Text(stringResource(Res.string.nav_favorites)) },
                                     )
                                     NavigationBarItem(
                                         selected = currentScreen is Screen.Settings,
@@ -107,8 +110,8 @@ fun ChrdApp(topPadding: Dp = 0.dp) {
                                                 backStack.add(Screen.Settings)
                                             }
                                         },
-                                        icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
-                                        label = { Text("Settings") },
+                                        icon = { Icon(Icons.Default.Settings, contentDescription = stringResource(Res.string.nav_settings)) },
+                                        label = { Text(stringResource(Res.string.nav_settings)) },
                                     )
                                 }
                             }
@@ -235,7 +238,7 @@ fun ChrdApp(topPadding: Dp = 0.dp) {
                                             .paint(painter, colorFilter = iconColorFilter),
                                     )
                                     BasicText(
-                                        entry.label,
+                                        stringResource(entry.labelRes),
                                         style = TextStyle(color = contentColor, fontSize = 12.sp),
                                     )
                                 }

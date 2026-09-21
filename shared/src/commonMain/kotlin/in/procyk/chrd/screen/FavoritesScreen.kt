@@ -13,17 +13,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import chrd.shared.generated.resources.Res
+import chrd.shared.generated.resources.favorites
+import chrd.shared.generated.resources.favorites_empty
+import chrd.shared.generated.resources.favorites_remove_content_description
 import `in`.procyk.chrd.component.Screen
 import `in`.procyk.chrd.component.liquid.LiquidBottomTabsSpacer
 import `in`.procyk.chrd.model.SongListing
 import `in`.procyk.chrd.viewmodel.FavoritesViewModel
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun FavoritesScreen(
     viewModel: FavoritesViewModel,
     onSongSelected: (SongListing) -> Unit,
 ) {
-    Screen(title = "Favorites") { padding ->
+    Screen(title = stringResource(Res.string.favorites)) { padding ->
         val favorites by viewModel.favorites.collectAsState()
         if (favorites.isEmpty()) {
             Box(
@@ -32,7 +37,7 @@ fun FavoritesScreen(
                     .fillMaxSize(),
                 contentAlignment = Alignment.Center,
             ) {
-                Text("No favorites yet")
+                Text(stringResource(Res.string.favorites_empty))
             }
         } else {
             LazyColumn(
@@ -75,7 +80,7 @@ fun FavoritesScreen(
                             IconButton(onClick = { viewModel.removeFavorite(listing) }) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
-                                    contentDescription = "Remove from favorites",
+                                    contentDescription = stringResource(Res.string.favorites_remove_content_description),
                                 )
                             }
                         }

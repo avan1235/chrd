@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import chrd.shared.generated.resources.*
 import `in`.procyk.chrd.ChrdFonts
 import `in`.procyk.chrd.component.Screen
 import `in`.procyk.chrd.component.liquid.LiquidBottomTabsSpacer
@@ -30,6 +31,7 @@ import `in`.procyk.chrd.viewmodel.SongViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 
 
@@ -125,7 +127,7 @@ private fun AutoScrollableSongView(
                                 fontWeight = FontWeight.Bold,
                             )
                             Text(
-                                text = "by ${song.author}",
+                                text = stringResource(Res.string.song_by_author, song.author),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -135,14 +137,14 @@ private fun AutoScrollableSongView(
                         IconButton(onClick = viewModel::halfToneDown) {
                             Icon(
                                 imageVector = Icons.Default.ArrowCircleDown,
-                                contentDescription = "Half tone down",
+                                contentDescription = stringResource(Res.string.song_half_tone_down),
                                 tint = MaterialTheme.colorScheme.primary,
                             )
                         }
                         IconButton(onClick = viewModel::halfToneUp) {
                             Icon(
                                 imageVector = Icons.Default.ArrowCircleUp,
-                                contentDescription = "Half tone up",
+                                contentDescription = stringResource(Res.string.song_half_tone_up),
                                 tint = MaterialTheme.colorScheme.primary,
                             )
                         }
@@ -153,7 +155,9 @@ private fun AutoScrollableSongView(
                         IconButton(onClick = viewModel::toggleFavorite) {
                             Icon(
                                 imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Outlined.FavoriteBorder,
-                                contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
+                                contentDescription = stringResource(
+                                    if (isFavorite) Res.string.song_remove_from_favorites else Res.string.song_add_to_favorites
+                                ),
                                 tint = if (isFavorite) MaterialTheme.colorScheme.primary else LocalContentColor.current,
                             )
                         }
@@ -193,7 +197,7 @@ private fun AutoScrollableSongView(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Add,
-                                    contentDescription = "Scroll Faster",
+                                    contentDescription = stringResource(Res.string.song_scroll_faster),
                                 )
                             }
 
@@ -204,7 +208,7 @@ private fun AutoScrollableSongView(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Remove,
-                                    contentDescription = "Scroll Slower",
+                                    contentDescription = stringResource(Res.string.song_scroll_slower),
                                 )
                             }
                         }
@@ -230,7 +234,7 @@ private fun AutoScrollableSongView(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Replay,
-                                contentDescription = "Reset Scroll",
+                                contentDescription = stringResource(Res.string.song_reset_scroll),
                             )
                         }
                     }
@@ -247,7 +251,9 @@ private fun AutoScrollableSongView(
                         ) {
                             Icon(
                                 imageVector = if (isAutoScroll) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                contentDescription = if (isAutoScroll) "Pause Auto-scroll" else "Start Auto-scroll",
+                                contentDescription = stringResource(
+                                    if (isAutoScroll) Res.string.song_pause_auto_scroll else Res.string.song_start_auto_scroll
+                                ),
                             )
                         }
                     }
@@ -281,12 +287,12 @@ private fun AutoScrollableSongView(
                 onDismissRequest = { clickedChord = null },
                 confirmButton = {
                     TextButton(onClick = { clickedChord = null }) {
-                        Text("Close")
+                        Text(stringResource(Res.string.common_close))
                     }
                 },
                 title = {
                     Text(
-                        text = "How to play ${clickedChord!!.value} chord?",
+                        text = stringResource(Res.string.song_how_to_play_chord, clickedChord!!.value),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary,
@@ -309,9 +315,9 @@ private fun AutoScrollableSongView(
 private fun SongSectionView(section: SongSection, onChordClick: (Chord) -> Unit) {
     Column {
         val sectionName = when (section.type) {
-            SectionType.VERSE -> "Verse"
-            SectionType.CHORUS -> "Chorus"
-            SectionType.BRIDGE -> "Bridge"
+            SectionType.VERSE -> stringResource(Res.string.section_verse)
+            SectionType.CHORUS -> stringResource(Res.string.section_chorus)
+            SectionType.BRIDGE -> stringResource(Res.string.section_bridge)
             SectionType.OTHER -> ""
         }
 

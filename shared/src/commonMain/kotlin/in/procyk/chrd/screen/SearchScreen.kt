@@ -18,11 +18,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import chrd.shared.generated.resources.Res
+import chrd.shared.generated.resources.search_placeholder
 import com.kyant.shapes.Capsule
 import `in`.procyk.chrd.component.Screen
 import `in`.procyk.chrd.component.liquid.LiquidBottomTabsSpacer
 import `in`.procyk.chrd.model.SongListing
 import `in`.procyk.chrd.viewmodel.SearchViewModel
+import org.jetbrains.compose.resources.stringResource
 
 
 @Composable
@@ -130,7 +133,7 @@ fun SearchScreen(
                         ),
                         placeholder = {
                             Text(
-                                "Search songs by titles or authors…",
+                                stringResource(Res.string.search_placeholder),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )

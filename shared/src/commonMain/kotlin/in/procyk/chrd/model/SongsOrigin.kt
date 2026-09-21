@@ -20,6 +20,7 @@ sealed class SongsOrigin : AutoCloseable {
     val name: String
         get() = baseUrl
             .substringAfter("://")
+            .substringAfter("www")
             .substringBefore('/')
             .split('.', '-')
             .dropLast(1)

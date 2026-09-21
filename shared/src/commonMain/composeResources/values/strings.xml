@@ -1,0 +1,41 @@
+<resources>
+    <!-- Navigation -->
+    <string name="nav_songs">Songs</string>
+    <string name="nav_favorites">Favorites</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="settings_liquid_glass_navigation">Liquid glass navigation</string>
+
+    <!-- Search -->
+    <string name="search_placeholder">Search songs by titles or authors…</string>
+
+    <!-- Favorites -->
+    <string name="favorites">Favorites</string>
+    <string name="favorites_empty">No favorites yet</string>
+    <string name="favorites_remove_content_description">Remove from favorites</string>
+
+    <!-- Song details & controls -->
+    <string name="song_by_author">by %s</string>
+    <string name="song_half_tone_down">Half tone down</string>
+    <string name="song_half_tone_up">Half tone up</string>
+    <string name="song_add_to_favorites">Add to favorites</string>
+    <string name="song_remove_from_favorites">Remove from favorites</string>
+    <string name="song_scroll_faster">Scroll Faster</string>
+    <string name="song_scroll_slower">Scroll Slower</string>
+    <string name="song_reset_scroll">Reset Scroll</string>
+    <string name="song_start_auto_scroll">Start Auto-scroll</string>
+    <string name="song_pause_auto_scroll">Pause Auto-scroll</string>
+    <string name="song_how_to_play_chord">How to play %s chord?</string>
+    <string name="common_close">Close</string>
+
+    <!-- Song sections -->
+    <string name="section_verse">Verse</string>
+    <string name="section_chorus">Chorus</string>
+    <string name="section_bridge">Bridge</string>
+</resources>
