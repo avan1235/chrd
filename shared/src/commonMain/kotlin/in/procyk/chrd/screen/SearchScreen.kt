@@ -1,11 +1,11 @@
 package `in`.procyk.chrd.screen
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -22,7 +23,6 @@ import chrd.shared.generated.resources.Res
 import chrd.shared.generated.resources.search_placeholder
 import com.kyant.shapes.Capsule
 import `in`.procyk.chrd.component.Screen
-import `in`.procyk.chrd.component.liquid.LiquidBottomTabsSpacer
 import `in`.procyk.chrd.model.SongListing
 import `in`.procyk.chrd.viewmodel.SearchViewModel
 import org.jetbrains.compose.resources.stringResource
@@ -53,10 +53,10 @@ fun SearchScreen(
                 contentPadding =
                     if (isLoadingSongs) PaddingValues(all = 16.dp)
                     else PaddingValues(
-                        top = 16.dp,
+                        bottom = 104.dp,
+                        top = 102.dp,
                         start = 16.dp,
                         end = 16.dp,
-                        bottom = if (useLiquidNavigation) 190.dp else 102.dp,
                     ),
             ) {
                 items(results) { song ->
@@ -104,18 +104,25 @@ fun SearchScreen(
                     modifier = Modifier.align(Alignment.Center),
                 )
             }
-            Box(
+            val verticalBias by animateFloatAsState(
+                targetValue = if (results.isEmpty()) 1f else -1f,
+                animationSpec = tween(600, easing = FastOutSlowInEasing),
+                label = "verticalBias"
+            )
+            BoxWithConstraints(
                 Modifier
                     .padding(16.dp)
-                    .padding(bottom = if (useLiquidNavigation) 88.dp else 0.dp)
-                    .align(Alignment.BottomCenter)
+                    .align(BiasAlignment(0f, verticalBias))
                     .fillMaxWidth(),
                 contentAlignment = Alignment.Center,
             ) {
+                val width = maxWidth
                 Row(
-                    modifier = Modifier.widthIn(max = 480.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                    Modifier
+                        .padding(bottom = 88.dp)
+                        .widthIn(max = (480.dp + (width - 480.dp) * ((1f - verticalBias) / 2f))),
+                    Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                    Alignment.CenterVertically
                 ) {
                     OutlinedTextField(
                         shape = Capsule(),
