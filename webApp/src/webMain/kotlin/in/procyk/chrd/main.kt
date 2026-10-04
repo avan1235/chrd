@@ -4,6 +4,8 @@ package `in`.procyk.chrd
 
 import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalFontFamilyResolver
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
@@ -24,7 +26,10 @@ fun main() {
         }
     ) {
         WithFontResourcesLoaded {
-            ChrdApp(topPadding = topPadding)
+            ChrdApp(
+                topPadding = topPadding,
+                onThemeChanged = ::applyPageTheme,
+            )
         }
     }
 }
@@ -40,6 +45,31 @@ private fun safeAreaInsetTopPx(): Double = js(
         "var value = parseFloat(getComputedStyle(probe).paddingTop) || 0;" +
         "document.body.removeChild(probe);" +
         "return value;" +
+    "})()"
+)
+
+/**
+ * Keeps the host page in sync with the Compose theme. The iOS status bar color (`#ios-status-bar-backdrop` and the
+ * page root background in styles.css) is driven by the `--app-background` CSS variable, which by default follows
+ * `prefers-color-scheme`; when the user forces light/dark in the app settings the system preference no longer
+ * matches, so the resolved colors are pushed here explicitly. `theme-color` is updated as well for Android/older iOS.
+ */
+private fun applyPageTheme(isDark: Boolean, background: Color) {
+    val argb = background.toArgb()
+    val hex = (argb and 0xFFFFFF).toString(16).padStart(6, '0')
+    setPageTheme(if (isDark) "dark" else "light", "#$hex")
+}
+
+private fun setPageTheme(colorScheme: String, background: String): Unit = js(
+    "(function () {" +
+        "var root = document.documentElement;" +
+        "root.style.setProperty('--app-background', background);" +
+        "root.style.colorScheme = colorScheme;" +
+        "var metas = document.querySelectorAll('meta[name=\"theme-color\"]');" +
+        "for (var i = 0; i < metas.length; i++) {" +
+            "metas[i].removeAttribute('media');" +
+            "metas[i].setAttribute('content', background);" +
+        "}" +
     "})()"
 )
 

@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
@@ -49,13 +50,33 @@ private enum class TabEntry(
     SETTINGS(Icons.Default.Settings, Res.string.nav_settings),
 }
 
+/**
+ * @param onThemeChanged invoked whenever the effective appearance changes (either because the user switched
+ * [ThemeMode] in the settings or because the system theme changed while in [ThemeMode.SYSTEM]); receives whether
+ * the dark palette is active and the resolved background color. Platforms use it to keep host-level chrome (e.g. the
+ * web page root / iOS PWA status bar color) in sync with the Compose theme.
+ */
 @Composable
-fun ChrdApp(topPadding: Dp = 0.dp) {
+fun ChrdApp(
+    topPadding: Dp = 0.dp,
+    onThemeChanged: (isDark: Boolean, background: Color) -> Unit = { _, _ -> },
+) {
     val settingsRepository = rememberAppSettingsRepository()
     val songRepository = rememberSongRepository()
     val savedSettingsState by settingsRepository.settings.collectAsState(initial = null)
     val savedSettings = savedSettingsState ?: return
     ChrdTheme(themeMode = savedSettings.themeMode) {
+        val isDarkTheme = when (savedSettings.themeMode) {
+            ThemeMode.LIGHT -> false
+            ThemeMode.DARK -> true
+            ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        }
+        val background = MaterialTheme.colorScheme.background
+        val currentOnThemeChanged by rememberUpdatedState(onThemeChanged)
+        LaunchedEffect(isDarkTheme, background) {
+            currentOnThemeChanged(isDarkTheme, background)
+        }
+
         val backStack = rememberNavBackStack(Screen.SavedStateConfiguration, Screen.Search)
 
         var isFullScreen by remember { mutableStateOf(true) }

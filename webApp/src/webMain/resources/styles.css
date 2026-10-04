@@ -3,6 +3,10 @@
  * backgroundLight = 0xFFFEFBFF, backgroundDark = 0xFF1B1B1F.
  * Since iOS 26 the status bar tint is sampled from the root background instead of `theme-color`,
  * so a mismatch here shows up as a tinted band under the status bar.
+ *
+ * The `prefers-color-scheme` defaults below only cover the first paint; once the app is running,
+ * `applyPageTheme` in webApp main.kt overrides `--app-background` (and `color-scheme`) on <html> with the
+ * actually selected theme, so a forced light/dark appearance in the settings is reflected too.
  */
 :root {
     --app-background: #fefbff;
