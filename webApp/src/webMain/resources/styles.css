@@ -1,8 +1,47 @@
+:root {
+    /* overridden from Kotlin with MaterialTheme.colorScheme.background */
+    --chrd-background: light-dark(#fefbff, #1b1b1f);
+}
+
 html, body {
     width: 100dvw;
     height: 101dvh;
     margin: 0;
     padding: 0;
-    background-color: #ffffff;
+    /* iOS 26 tints the status bar from the body background */
+    background-color: var(--chrd-background);
     overflow: hidden;
+}
+
+/* measured from Kotlin to get the real env(safe-area-inset-top) */
+#chrd-safe-area-probe {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: env(safe-area-inset-top, 0px);
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.chrd-status-bar {
+    display: none;
+}
+
+/*
+ * iOS 27 draws a system blur over the top of installed web apps (portrait). A solid fixed element
+ * at least 6px high, at least 80% wide and within 4px of the top replaces it with a solid status bar.
+ */
+@media (display-mode: standalone), (display-mode: fullscreen) {
+    .chrd-status-bar {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: max(env(safe-area-inset-top, 0px), 6px);
+        background-color: var(--chrd-background);
+        pointer-events: none;
+        z-index: 2147483647;
+    }
 }

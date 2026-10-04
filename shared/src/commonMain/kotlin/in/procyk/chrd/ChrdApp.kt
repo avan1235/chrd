@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
@@ -50,12 +51,19 @@ private enum class TabEntry(
 }
 
 @Composable
-fun ChrdApp(topPadding: Dp = 0.dp) {
+fun ChrdApp(
+    topPadding: Dp = 0.dp,
+    onBackgroundColorChanged: (Color) -> Unit = {},
+) {
     val settingsRepository = rememberAppSettingsRepository()
     val songRepository = rememberSongRepository()
     val savedSettingsState by settingsRepository.settings.collectAsState(initial = null)
     val savedSettings = savedSettingsState ?: return
     ChrdTheme(themeMode = savedSettings.themeMode) {
+        val backgroundColor = MaterialTheme.colorScheme.background
+        LaunchedEffect(backgroundColor) {
+            onBackgroundColorChanged(backgroundColor)
+        }
         val backStack = rememberNavBackStack(Screen.SavedStateConfiguration, Screen.Search)
 
         var isFullScreen by remember { mutableStateOf(true) }

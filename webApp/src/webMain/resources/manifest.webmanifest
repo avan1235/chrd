@@ -1,0 +1,17 @@
+{
+  "name": "Chrd",
+  "short_name": "Chrd",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fefbff",
+  "theme_color": "#fefbff",
+  "icons": [
+    {
+      "src": "apple-touch-icon-1024x1024.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
