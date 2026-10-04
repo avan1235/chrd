@@ -1,0 +1,63 @@
+/*
+ * Must match ChrdTheme background colors (shared/.../ChrdTheme.kt):
+ * backgroundLight = 0xFFFEFBFF, backgroundDark = 0xFF1B1B1F.
+ * Since iOS 26 the status bar tint is sampled from the root background instead of `theme-color`,
+ * so a mismatch here shows up as a tinted band under the status bar.
+ *
+ * The `prefers-color-scheme` defaults below only cover the first paint; once the app is running,
+ * `applyPageTheme` in webApp main.kt overrides `--app-background` (and `color-scheme`) on <html> with the
+ * actually selected theme, so a forced light/dark appearance in the settings is reflected too.
+ */
+:root {
+    --app-background: #fefbff;
+    color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --app-background: #1b1b1f;
+    }
+}
+
+html, body {
+    width: 100dvw;
+    height: 101dvh;
+    margin: 0;
+    padding: 0;
+    background-color: var(--app-background);
+    overflow: hidden;
+}
+
+/*
+ * iOS 27+ standalone PWAs render a progressive system blur under the status bar. WebKit hit-tests a single point
+ * 4px below the top-center of the viewport; if it lands on a `position: fixed` element whose border box is wider
+ * than 10px in both directions (`thinBorderWidth`), at least 90% of the viewport wide and with opacity >= 0.1,
+ * the status bar is painted solid with that element's computed `background-color` and the blur is dropped.
+ * Because the color is taken from the computed style and not from painted pixels, `background-clip: text` on an
+ * empty element gives WebKit the color without drawing a visible bar on screen.
+ *
+ * Requires `apple-mobile-web-app-status-bar-style` != `black-translucent` (see index.html): in edge-to-edge mode
+ * WebKit never creates the top color-extension view and this has no effect.
+ *
+ * Only enabled for home-screen launches on WebKit touch devices; everywhere else it stays `display: none`.
+ */
+#ios-status-bar-backdrop {
+    display: none;
+}
+
+@supports (-webkit-touch-callout: none) {
+    html[data-standalone] #ios-status-bar-backdrop {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: 11px;
+        background-color: var(--app-background);
+        -webkit-background-clip: text;
+        background-clip: text;
+        pointer-events: none;
+        z-index: 2147483647;
+    }
+}

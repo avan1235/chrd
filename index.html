@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="apple-touch-icon" sizes="1024x1024" href="apple-touch-icon-1024x1024.png">
+    <link rel="icon" href="favicon.ico">
+    <!--
+      iOS PWA status bar handling, version by version:
+        * `apple-mobile-web-app-status-bar-style` MUST NOT be `black-translucent`. That makes the web view
+          edge-to-edge (page drawn under the status bar), and on iOS 27 WebKit then never creates the top
+          "color extension" view (`_obscuredInsets.top == 0`), so the system blur under the status bar can NOT be
+          removed by anything the page does. With `default` the status bar is owned by the platform, the layout
+          viewport starts below it and `env(safe-area-inset-top)` is 0.
+          NOTE: the value is baked into the web clip at install time - the PWA has to be removed from the home
+          screen and added again after changing it.
+        * iOS <= 25: with `default` the status bar is opaque and tinted with `theme-color` (below), which matches
+          the app background, so it blends with the app.
+        * iOS 26 (Liquid Glass): `theme-color` is ignored, the status bar tint is sampled from the page root
+          background (see `html, body` in styles.css) or from a fixed element touching the top edge.
+        * iOS 27: installed PWAs get a progressive system blur under the status bar unless WebKit finds a
+          `position: fixed` element at the top edge (> 10px high, >= 90% wide, opacity >= 0.1); the status bar is
+          then painted solid in that element's `background-color` and the blur is dropped - see
+          `#ios-status-bar-backdrop` below, which is kept invisible via `background-clip: text`.
+    -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#fefbff" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#1b1b1f" media="(prefers-color-scheme: dark)">
+    <title>Chrd</title>
+    <link type="text/css" rel="stylesheet" href="styles.css">
+    <script>
+        (function () {
+            // Flag home-screen launches before first paint; `navigator.standalone` covers older iOS versions
+            // where the `display-mode` media query is not reliable.
+            var standalone = window.navigator.standalone === true
+                || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+            if (standalone) document.documentElement.setAttribute('data-standalone', '');
+        })();
+    </script>
+    <script src="./service-worker.js"></script>
+</head>
+<body>
+<div id="ios-status-bar-backdrop" aria-hidden="true"></div>
+<script type="application/javascript" src="webApp.js"></script>
+</body>
+</html>
