@@ -1,8 +1,49 @@
+/*
+ * Must match ChrdTheme background colors (shared/.../ChrdTheme.kt):
+ * backgroundLight = 0xFFFEFBFF, backgroundDark = 0xFF1B1B1F.
+ * Since iOS 26 the status bar tint is sampled from the root background instead of `theme-color`,
+ * so a mismatch here shows up as a tinted band under the status bar.
+ */
+:root {
+    --app-background: #fefbff;
+    color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --app-background: #1b1b1f;
+    }
+}
+
 html, body {
     width: 100dvw;
     height: 101dvh;
     margin: 0;
     padding: 0;
-    background-color: #ffffff;
+    background-color: var(--app-background);
     overflow: hidden;
+}
+
+/*
+ * iOS 27+ standalone PWAs render a system blur under the status bar. A `position: fixed` element with a solid
+ * background that is at least 6px high, at least 80% wide and within 4px of the top makes iOS draw a solid,
+ * blur-free status bar in that color instead. Hidden everywhere else so iOS <= 26 and other platforms keep the
+ * fully transparent status bar over the page content.
+ */
+#ios-status-bar-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: max(env(safe-area-inset-top, 0px), 6px);
+    background-color: var(--app-background);
+    pointer-events: none;
+    z-index: 2147483647;
+}
+
+@media (display-mode: standalone), (display-mode: fullscreen) {
+    html.ios27-plus #ios-status-bar-backdrop {
+        display: block;
+    }
 }

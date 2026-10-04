@@ -4,17 +4,50 @@
     <meta charset="UTF-8">
     <link rel="apple-touch-icon" sizes="1024x1024" href="apple-touch-icon-1024x1024.png">
     <link rel="icon" href="favicon.ico">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!--
+      iOS PWA status bar handling, version by version:
+        * iOS <= 25: `black-translucent` + `viewport-fit=cover` draw the page under a transparent status bar.
+        * iOS 26 (Liquid Glass): `theme-color` and `apple-mobile-web-app-status-bar-style` are ignored, the status
+          bar tint is sampled from the page root background (see `html, body` in styles.css) - it must match the
+          app theme, otherwise a visible tinted band appears under the status bar (26.1 had an opaque-bar bug,
+          fixed in 26.2).
+        * iOS 27: installed PWAs get a system blur under the status bar. The only known way to get rid of it is a
+          `position: fixed` element (>= 6px high, >= 80% wide, within 4px of the top) with a solid background -
+          see `#ios-status-bar-backdrop` below, enabled only for iOS >= 27 via the `ios27-plus` class on <html>.
+      The legacy meta tags are kept on purpose for older iOS versions.
+    -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#fefbff" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#1b1b1f" media="(prefers-color-scheme: dark)">
     <title>Chrd</title>
     <link type="text/css" rel="stylesheet" href="styles.css">
+    <script>
+        (function () {
+            var ua = navigator.userAgent;
+            var isTouch = navigator.maxTouchPoints > 0;
+            var major = null;
+            var match = /(?:iPhone|iPad|iPod).*?OS (\d+)_/.exec(ua);
+            if (match) {
+                major = parseInt(match[1], 10);
+            } else if (/Macintosh/.test(ua) && isTouch) {
+                // iPadOS reports a desktop Safari UA; its Safari major version equals the iPadOS major version.
+                var safari = /Version\/(\d+)/.exec(ua);
+                if (safari) major = parseInt(safari[1], 10);
+            }
+            if (major !== null) {
+                document.documentElement.setAttribute('data-ios-major', String(major));
+                if (major >= 27) document.documentElement.classList.add('ios27-plus');
+            }
+        })();
+    </script>
     <script src="./service-worker.js"></script>
-    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: dark)">
 </head>
 <body>
+<div id="ios-status-bar-backdrop" aria-hidden="true"></div>
 <script type="application/javascript" src="webApp.js"></script>
 </body>
 </html>
