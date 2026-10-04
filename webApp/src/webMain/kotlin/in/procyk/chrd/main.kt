@@ -14,7 +14,10 @@ import org.jetbrains.compose.resources.preloadFont
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
-    val topPadding = if (isMobileClient()) 40.dp else 0.dp
+    // Non-zero only when the page is drawn under the status bar (e.g. a legacy iOS web clip installed with
+    // `black-translucent`); with `apple-mobile-web-app-status-bar-style=default` the viewport already starts
+    // below the status bar and this resolves to 0.
+    val topPadding = if (isMobileClient()) safeAreaInsetTopPx().dp else 0.dp
     ComposeViewport(
         configure = {
             isA11YEnabled = false
@@ -29,6 +32,16 @@ fun main() {
 private fun navigatorUserAgent(): String = js("navigator.userAgent")
 private fun navigatorMaxTouchPoints(): Int = js("navigator.maxTouchPoints")
 private fun windowHasCoarsePointer(): Boolean = js("window.matchMedia('(pointer: coarse)').matches")
+private fun safeAreaInsetTopPx(): Double = js(
+    "(function () {" +
+        "var probe = document.createElement('div');" +
+        "probe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;visibility:hidden;pointer-events:none;padding-top:env(safe-area-inset-top, 0px)';" +
+        "document.body.appendChild(probe);" +
+        "var value = parseFloat(getComputedStyle(probe).paddingTop) || 0;" +
+        "document.body.removeChild(probe);" +
+        "return value;" +
+    "})()"
+)
 
 private fun isMobileClient(): Boolean {
     val userAgent = navigatorUserAgent()
