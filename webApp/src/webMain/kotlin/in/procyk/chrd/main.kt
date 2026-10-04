@@ -9,7 +9,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.ComposeViewport
 import chrd.shared.generated.resources.*
-import kotlinx.browser.document
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.preloadFont
 
@@ -17,7 +16,6 @@ import org.jetbrains.compose.resources.preloadFont
 fun main() {
     val topPadding = if (isMobileClient()) 40.dp else 0.dp
     ComposeViewport(
-        viewportContainer = document.getElementById("chrd-app") ?: document.body!!,
         configure = {
             isA11YEnabled = false
         }

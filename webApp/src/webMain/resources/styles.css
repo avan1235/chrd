@@ -6,33 +6,3 @@ html, body {
     background-color: #ffffff;
     overflow: hidden;
 }
-
-/* Compose attaches a shadow root to its container, so it must not be body for siblings to render */
-#chrd-app {
-    width: 100%;
-    height: 100%;
-}
-
-/*
- * iOS 27 draws a system blur over the top of installed web apps (portrait). A painted fixed element
- * at the very top removes it; background-clip: text keeps the element itself invisible.
- */
-.chrd-remove-blur {
-    display: none;
-}
-
-@media (display-mode: standalone), (display-mode: fullscreen) {
-    .chrd-remove-blur {
-        display: block;
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 11px;
-        background: #ffffff;
-        -webkit-background-clip: text;
-        background-clip: text;
-        pointer-events: none;
-        z-index: 2147483647;
-    }
-}
